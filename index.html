@@ -142,6 +142,66 @@
                 radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
             z-index: 1;
         }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .loader-image {
+                width: 120px;
+                height: 120px;
+            }
+
+            #image1 {
+                left: -120px;
+            }
+
+            #image2 {
+                right: -120px;
+            }
+
+            .loader-text-container {
+                bottom: 20px;
+                left: 20px;
+                padding: 12px;
+                max-width: 200px;
+            }
+
+            .text-image {
+                width: 40px;
+                height: 40px;
+                margin-bottom: 8px;
+                padding: 5px;
+            }
+
+            .loader-text {
+                font-size: 11px;
+            }
+
+            .progress-bar {
+                bottom: 10px;
+                left: 20px;
+                width: calc(100% - 40px);
+            }
+
+            /* Adjust image positions for mobile */
+            @media (max-width: 768px) {
+                setTimeout(() => {
+                    image1.style.left = 'calc(50% - 120px)';
+                    image2.style.right = 'calc(50% - 120px)';
+                }, 1000);
+            }
+        }
+
+        /* Very small devices */
+        @media (max-width: 480px) {
+            .loader-text-container {
+                max-width: 160px;
+                padding: 10px;
+            }
+
+            .loader-text {
+                font-size: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -167,18 +227,25 @@
             const textContainer = document.getElementById('textContainer');
             const loaderContainer = document.querySelector('.loader-container');
             
+            // Check if mobile device
+            const isMobile = window.matchMedia("(max-width: 768px)").matches;
+            
+            // Set initial positions based on device
+            const imageWidth = isMobile ? 120 : 200;
+            const imageOffset = isMobile ? -120 : -200;
+            
             // Initial state - images off-screen, text hidden
             image1.style.opacity = '1';
-            image1.style.left = '-200px';
+            image1.style.left = `${imageOffset}px`;
             image2.style.opacity = '1';
-            image2.style.right = '-200px';
+            image2.style.right = `${imageOffset}px`;
             textContainer.style.opacity = '0';
             
             // Animation timeline
             setTimeout(() => {
                 // Move both images to center (they'll meet with borders touching)
-                image1.style.left = 'calc(50% - 200px)';
-                image2.style.right = 'calc(50% - 200px)';
+                image1.style.left = `calc(50% - ${imageWidth}px)`;
+                image2.style.right = `calc(50% - ${imageWidth}px)`;
                 
                 // Add subtle 3D tilt effect
                 image1.style.transform = 'perspective(1000px) rotateY(15deg)';

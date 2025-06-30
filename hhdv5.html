@@ -378,8 +378,8 @@
         /* Dashboard styles */
         .dashboard-container {
             display: none;
+            max-width: 1200px;
             width: 100%;
-            height: calc(100vh - 100px);
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 20px;
@@ -390,6 +390,7 @@
             opacity: 0;
             transform: translateY(20px);
             transition: all var(--transition-speed) var(--transition-easing);
+            min-height: calc(100vh - 100px);
         }
 
         .dashboard-container.active {
@@ -472,8 +473,7 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            height: calc(100% - 60px);
-            overflow-y: auto;
+            min-height: calc(100% - 60px);
         }
 
         .dashboard-section {
@@ -502,38 +502,42 @@
             margin-bottom: 30px;
         }
 
-        .announcement-card {
+        .announcement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .announcement-item {
             background: white;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
             padding: 15px;
-            margin-bottom: 20px;
             border-left: 4px solid var(--primary);
             transition: all 0.3s ease;
+            cursor: pointer;
             transform: translateY(0);
             opacity: 0;
-            cursor: pointer;
         }
 
-        .announcement-card.visible {
+        .announcement-item.visible {
             opacity: 1;
         }
 
-        .announcement-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        .announcement-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
         .announcement-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
         }
 
         .announcement-title {
             font-weight: 600;
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: var(--primary-dark);
         }
 
@@ -543,17 +547,16 @@
         }
 
         .announcement-content {
-            color: var(--dark);
-            margin-bottom: 10px;
-            line-height: 1.6;
             max-height: 0;
             overflow: hidden;
+            color: var(--dark);
+            line-height: 1.6;
             transition: max-height 0.3s ease;
         }
 
-        .announcement-card.expanded .announcement-content {
+        .announcement-item.expanded .announcement-content {
             max-height: 1000px;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         .announcement-image {
@@ -573,6 +576,7 @@
             font-size: 0.8rem;
             color: var(--gray);
             text-align: right;
+            margin-top: 10px;
         }
 
         .no-announcements {
@@ -2240,7 +2244,7 @@
             <!-- Announcements Section -->
             <div class="dashboard-section announcements-section">
                 <h3>Company Announcements</h3>
-                <div id="announcementsBody">
+                <div class="announcement-list" id="announcementsBody">
                     <div class="no-announcements">Loading announcements...</div>
                 </div>
             </div>
@@ -2867,8 +2871,8 @@
                                 minute: '2-digit'
                             });
                             
-                            const announcementCard = document.createElement('div');
-                            announcementCard.className = 'announcement-card';
+                            const announcementItem = document.createElement('div');
+                            announcementItem.className = 'announcement-item';
                             
                             let announcementContent = `
                                 <div class="announcement-header">
@@ -2891,19 +2895,23 @@
                                 </div>
                             `;
                             
-                            announcementCard.innerHTML = announcementContent;
-                            announcementsBody.appendChild(announcementCard);
+                            announcementItem.innerHTML = announcementContent;
+                            announcementsBody.appendChild(announcementItem);
                             
                             // Add click event to toggle content
-                            announcementCard.addEventListener('click', function() {
+                            announcementItem.addEventListener('click', function() {
                                 this.classList.toggle('expanded');
                                 const content = this.querySelector('.announcement-content');
-                                content.style.display = content.style.display === 'none' ? 'block' : 'none';
+                                if (this.classList.contains('expanded')) {
+                                    content.style.display = 'block';
+                                } else {
+                                    content.style.display = 'none';
+                                }
                             });
                             
-                            // Animate each card with a delay
+                            // Animate each item with a delay
                             setTimeout(() => {
-                                announcementCard.classList.add('visible');
+                                announcementItem.classList.add('visible');
                             }, index * 150);
                         });
                     })
@@ -3524,7 +3532,6 @@
 
             // Load chat forums
             function loadChatForums() {
-                const forumsBody = document.getElementById('forumsBody');
                 forumsBody.innerHTML = '<div class="no-teams">Loading chat forums...</div>';
                 
                 const user = auth.currentUser;
@@ -3910,7 +3917,6 @@
 
             // Load employee's teams for modal
             function loadEmployeeTeamsForModal(employeeId) {
-                const teamsModalBody = document.getElementById('teamsModalBody');
                 teamsModalBody.innerHTML = '<div class="no-teams">Loading your team assignments...</div>';
                 
                 // Get all teams (past and future)

@@ -37,6 +37,15 @@
             object-fit: cover;
             opacity: 0;
             transition: all 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            border-radius: 16px;
+            /* Glass effect */
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
+            transform: perspective(1000px) rotateY(0deg);
+            z-index: 2;
         }
 
         #image1 {
@@ -54,10 +63,20 @@
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.5s ease, transform 0.5s ease;
+            /* Glass effect */
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+            max-width: 320px;
+            z-index: 3;
         }
 
         .loader-text {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.9);
             font-size: 14px;
             line-height: 1.6;
         }
@@ -71,6 +90,13 @@
             height: 60px;
             margin-bottom: 10px;
             object-fit: contain;
+            /* Glass effect enhancement */
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: 8px;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .progress-bar {
@@ -81,6 +107,11 @@
             height: 2px;
             background: rgba(255, 255, 255, 0.1);
             overflow: hidden;
+            border-radius: 2px;
+            /* Glass effect */
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            z-index: 3;
         }
 
         .progress-bar::after {
@@ -92,11 +123,24 @@
             width: 0%;
             background: linear-gradient(90deg, #ff4d4d, #f9cb28);
             animation: progress 5s linear forwards;
+            border-radius: 2px;
         }
 
         @keyframes progress {
             0% { width: 0%; }
             100% { width: 100%; }
+        }
+
+        /* Adding a subtle background pattern for depth */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+            z-index: 1;
         }
     </style>
 </head>
@@ -135,6 +179,10 @@
                 // Move both images to center (they'll meet with borders touching)
                 image1.style.left = 'calc(50% - 200px)';
                 image2.style.right = 'calc(50% - 200px)';
+                
+                // Add subtle 3D tilt effect
+                image1.style.transform = 'perspective(1000px) rotateY(15deg)';
+                image2.style.transform = 'perspective(1000px) rotateY(-15deg)';
                 
                 // Show text container at the same time
                 textContainer.style.opacity = '1';

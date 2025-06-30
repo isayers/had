@@ -109,6 +109,11 @@
             transition: all var(--transition-speed) var(--transition-easing);
         }
 
+        .dashboard-icons-container.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         .dashboard-icon {
             width: 60px;
             height: 60px;
@@ -373,8 +378,8 @@
         /* Dashboard styles */
         .dashboard-container {
             display: none;
-            max-width: 1200px;
             width: 100%;
+            height: calc(100vh - 100px);
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 20px;
@@ -467,6 +472,8 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
+            height: calc(100% - 60px);
+            overflow-y: auto;
         }
 
         .dashboard-section {
@@ -505,6 +512,7 @@
             transition: all 0.3s ease;
             transform: translateY(0);
             opacity: 0;
+            cursor: pointer;
         }
 
         .announcement-card.visible {
@@ -538,6 +546,14 @@
             color: var(--dark);
             margin-bottom: 10px;
             line-height: 1.6;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .announcement-card.expanded .announcement-content {
+            max-height: 1000px;
+            margin-top: 15px;
         }
 
         .announcement-image {
@@ -2268,7 +2284,7 @@
     </div>
 
     <!-- Dashboard Floating Icons -->
-    <div class="dashboard-icons-container">
+    <div class="dashboard-icons-container hidden" id="dashboardIconsContainer">
         <div class="dashboard-icon" id="dashboardHomeIcon">
             <i class="fas fa-home"></i>
             <div class="dashboard-icon-tooltip">Home</div>
@@ -2825,6 +2841,7 @@
 
             // Load announcements for dashboard
             function loadAnnouncements() {
+                const announcementsBody = document.getElementById('announcementsBody');
                 announcementsBody.innerHTML = '<div class="no-announcements">Loading announcements...</div>';
                 
                 db.collection('announcements')
@@ -2858,7 +2875,8 @@
                                     <div class="announcement-title">${announcement.title}</div>
                                     <div class="announcement-date">${formattedDate}</div>
                                 </div>
-                                <div class="announcement-content">${announcement.content}</div>
+                                <div class="announcement-content" style="display: none;">
+                                    ${announcement.content}
                             `;
                             
                             // Add image if available
@@ -2869,11 +2887,19 @@
                             }
                             
                             announcementContent += `
-                                <div class="announcement-author">Posted by: ${announcement.author || 'Management'}</div>
+                                    <div class="announcement-author">Posted by: ${announcement.author || 'Management'}</div>
+                                </div>
                             `;
                             
                             announcementCard.innerHTML = announcementContent;
                             announcementsBody.appendChild(announcementCard);
+                            
+                            // Add click event to toggle content
+                            announcementCard.addEventListener('click', function() {
+                                this.classList.toggle('expanded');
+                                const content = this.querySelector('.announcement-content');
+                                content.style.display = content.style.display === 'none' ? 'block' : 'none';
+                            });
                             
                             // Animate each card with a delay
                             setTimeout(() => {
@@ -3498,6 +3524,7 @@
 
             // Load chat forums
             function loadChatForums() {
+                const forumsBody = document.getElementById('forumsBody');
                 forumsBody.innerHTML = '<div class="no-teams">Loading chat forums...</div>';
                 
                 const user = auth.currentUser;
@@ -3713,6 +3740,7 @@
             const userAvatar = document.getElementById('userAvatar');
             const teamsList = document.getElementById('teamsList');
             const announcementsBody = document.getElementById('announcementsBody');
+            const dashboardIconsContainer = document.getElementById('dashboardIconsContainer');
             
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -3784,6 +3812,7 @@
                 setTimeout(() => {
                     loginContainer.style.display = 'none';
                     dashboardContainer.classList.add('active');
+                    dashboardIconsContainer.classList.remove('hidden');
                     
                     // Set user avatar initials
                     const email = user.email.split('@')[0];
@@ -3881,6 +3910,7 @@
 
             // Load employee's teams for modal
             function loadEmployeeTeamsForModal(employeeId) {
+                const teamsModalBody = document.getElementById('teamsModalBody');
                 teamsModalBody.innerHTML = '<div class="no-teams">Loading your team assignments...</div>';
                 
                 // Get all teams (past and future)
@@ -4051,6 +4081,7 @@
             logoutBtn.addEventListener('click', function() {
                 // Animate dashboard out
                 dashboardContainer.classList.remove('active');
+                dashboardIconsContainer.classList.add('hidden');
                 
                 // After animation completes, show login
                 setTimeout(() => {

@@ -2422,6 +2422,33 @@ html, body {
     let teams = []; // Initialize teams array globally
     let activeBreakAlerts = []; // Track active break alerts
 
+    // Theme switcher functionality
+    const themeSwitcher = document.getElementById('themeSwitcher');
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    // Check for saved theme preference or use system preference
+    const currentTheme = localStorage.getItem('theme');
+    if (currentTheme === 'dark' || (!currentTheme && prefersDarkScheme.matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeSwitcher.innerHTML = '<i class="fas fa-sun"></i>';
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeSwitcher.innerHTML = '<i class="fas fa-moon"></i>';
+    }
+    
+    // Toggle theme when switcher is clicked
+    themeSwitcher.addEventListener('click', function() {
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            themeSwitcher.innerHTML = '<i class="fas fa-moon"></i>';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            themeSwitcher.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         // Fixed header elements
         const fixedHeader = document.querySelector('.fixed-header');
@@ -3221,8 +3248,17 @@ html, body {
                             showBreakAlert(
                                 `Team Break Starting Soon`, 
                                 `Team ${team.name}'s break starts at ${formatTime(breakItem.start)}`,
-                                'team',
-                                'start'
+                                'team'
+                            );
+                        }
+                        
+                        // Check if break has just started
+                        if (isTimeWithinRange(currentTime, breakItem.start, 1) && !alertedBreaks.has(`started-${breakKey}`)) {
+                            alertedBreaks.add(`started-${breakKey}`);
+                            showBreakAlert(
+                                `Team Break Started`, 
+                                `Team ${team.name}'s break has started! Enjoy your break until ${formatTime(breakItem.end)}`,
+                                'team'
                             );
                         }
                         
@@ -3232,8 +3268,7 @@ html, body {
                             showBreakAlert(
                                 `Team Break Ending Soon`, 
                                 `Team ${team.name}'s break ends at ${formatTime(breakItem.end)}`,
-                                'team',
-                                'end'
+                                'team'
                             );
                         }
                     });
@@ -3251,8 +3286,17 @@ html, body {
                                 showBreakAlert(
                                     `Your Break Starting Soon`, 
                                     `Your break starts at ${formatTime(breakItem.start)} (Team: ${team.name})`,
-                                    'individual',
-                                    'start'
+                                    'individual'
+                                );
+                            }
+                            
+                            // Check if break has just started
+                            if (isTimeWithinRange(currentTime, breakItem.start, 1) && !alertedBreaks.has(`started-${breakKey}`)) {
+                                alertedBreaks.add(`started-${breakKey}`);
+                                showBreakAlert(
+                                    `Your Break Started`, 
+                                    `Your break has started! Enjoy your break until ${formatTime(breakItem.end)} (Team: ${team.name})`,
+                                    'individual'
                                 );
                             }
                             
@@ -3262,8 +3306,7 @@ html, body {
                                 showBreakAlert(
                                     `Your Break Ending Soon`, 
                                     `Your break ends at ${formatTime(breakItem.end)} (Team: ${team.name})`,
-                                    'individual',
-                                    'end'
+                                    'individual'
                                 );
                             }
                         }
@@ -3284,14 +3327,14 @@ html, body {
             return Math.abs(currentTotal - targetTotal) <= rangeMinutes;
         }
 
-        // Show break alert - Updated with advanced features
-        function showBreakAlert(title, message, type, breakType) {
+        // Show break alert with sound and vibration
+        function showBreakAlert(title, message, type) {
             // Close any existing alerts of the same type
-            closeBreakAlerts(`${type}-${breakType}`);
+            closeBreakAlerts(type);
             
             const breakAlert = document.createElement('div');
             breakAlert.className = `break-alert break-alert-${type}`;
-            breakAlert.dataset.type = `${type}-${breakType}`;
+            breakAlert.dataset.type = type;
             
             // Add animation class
             breakAlert.classList.add('break-alert-popup');
@@ -3325,17 +3368,21 @@ html, body {
             document.body.appendChild(breakAlert);
             activeBreakAlerts.push(breakAlert);
             
-            // Play notification sound - different sounds for start and end
-            const audio = new Audio(breakType === 'start' ? 
-                'https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3' : 
-                'https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
-            audio.play().catch(e => console.log('Audio play failed:', e));
+            // Play notification sound
+            try {
+                const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
             
-            // Vibrate device if supported - different patterns for start and end
-            if ('vibrate' in navigator) {
-                navigator.vibrate(breakType === 'start' ? 
-                    [300, 100, 300] : // Start break pattern
-                    [200, 100, 200, 100, 200]); // End break pattern
+            // Vibrate device if supported
+            try {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate([200, 100, 200, 100, 200]);
+                }
+            } catch (e) {
+                console.log('Vibration error:', e);
             }
             
             // Auto-remove after 30 seconds if not manually dismissed
@@ -3394,14 +3441,13 @@ html, body {
                     // Reshow the alert
                     const title = breakAlert.querySelector('h4').textContent;
                     const message = breakAlert.querySelector('.break-alert-body').textContent.trim();
-                    const type = breakAlert.dataset.type.split('-')[0];
-                    const breakType = breakAlert.dataset.type.split('-')[1];
+                    const type = breakAlert.dataset.type;
                     
                     breakAlert.classList.add('break-alert-fadeout');
                     setTimeout(() => {
                         breakAlert.remove();
                         activeBreakAlerts = activeBreakAlerts.filter(alert => alert !== breakAlert);
-                        showBreakAlert(title, message, type, breakType);
+                        showBreakAlert(title, message, type);
                     }, 300);
                 }, 5000);
             } else {
@@ -4603,6 +4649,7 @@ html, body {
         fixedHeader.style.display = 'none';
         globalBackButton.style.display = 'none';
     });
+</script>
 </script>
 </body>
 </html>

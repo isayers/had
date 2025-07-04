@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <style>
+        
         /* Fixed Header Improvements */
 .fixed-header {
     display: flex;
@@ -2896,6 +2897,36 @@ button, a {
         .bounce {
             animation: bounce 1s infinite;
         }
+        /* Add space between chat forums header and content */
+.forums-content {
+    padding-top: 80px; /* Creates space below the fixed header */
+}
+
+/* Adjust the search container position to account for the new padding */
+.connect-search-container {
+    margin-top: 30px; /* Reduces the existing top margin to compensate */
+}
+
+/* Ensure the employee list has proper spacing */
+.employee-list {
+    margin-top: 20px;
+}
+
+/* Adjust the forums body spacing */
+#forumsBody {
+    margin-top: 20px;
+}
+
+/* For mobile responsiveness */
+@media (max-width: 576px) {
+    .forums-content {
+        padding-top: 60px; /* Slightly less space on mobile */
+    }
+    
+    .connect-search-container {
+        margin-top: 20px;
+    }
+}
     </style>
 </head>
 <body>
@@ -2909,7 +2940,7 @@ button, a {
             <div class="header-user-info">
                 <div class="header-user-avatar" id="headerUserAvatar">JD</div>
                 <button class="header-logout-btn" id="headerLogoutBtn">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    <i class="fas fa-sign-out-alt"></i> Logout</br>
                 </button>
             </div>
         </div>
@@ -3049,7 +3080,8 @@ button, a {
             <div class="no-teams">Loading chat forums...</div>
         </div>
     </div>
-
+ </br>
+    </br>
     <!-- Dashboard Floating Icons -->
     <div class="dashboard-icons-container hidden" id="dashboardIconsContainer">
         <div class="dashboard-icon" id="dashboardHomeIcon">

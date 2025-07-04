@@ -12,6 +12,361 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <style>
+        /* Fixed Header Improvements */
+.fixed-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 15px;
+    box-sizing: border-box;
+    width: calc(100% - 40px); /* Account for left/right margins */
+    max-width: 500px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.fixed-header h1 {
+    font-size: 1rem;
+    margin: 0;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 10px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.header-user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-user-avatar {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+}
+
+.header-logout-btn {
+    white-space: nowrap;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+}
+
+/* Back button adjustments */
+.back-button {
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 576px) {
+    .fixed-header {
+        width: calc(100% - 30px);
+        padding: 8px 10px;
+    }
+    
+    .fixed-header h1 {
+        font-size: 0.9rem;
+    }
+    
+    .header-user-avatar {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .header-logout-btn {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+    
+    .header-logout-btn i {
+        margin-right: 3px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 400px) {
+    .fixed-header h1 {
+        font-size: 0.8rem;
+    }
+    
+    .header-logout-btn span {
+        display: none;
+    }
+    
+    .header-logout-btn i {
+        margin-right: 0;
+    }
+}
+
+/* Prevent layout shift */
+.fixed-header > * {
+    flex-shrink: 0;
+}
+
+/* Ensure header stays on one line */
+.fixed-header {
+    line-height: 1.2;
+}
+        /* Additional CSS for Fixed Icons and Smooth Scrolling */
+
+/* Fixed floating icons that stay in place during scroll */
+.floating-icon {
+    position: fixed;
+    will-change: transform;
+    z-index: 999; /* Below header but above content */
+}
+
+/* Specific positions for each floating icon */
+.floating-icon:nth-child(1) {
+    top: 15%;
+    left: 5%;
+    animation-delay: 0s;
+}
+
+.floating-icon:nth-child(2) {
+    top: 15%;
+    right: 5%;
+    animation-delay: 1s;
+}
+
+.floating-icon:nth-child(3) {
+    bottom: 15%;
+    left: 5%;
+    animation-delay: 2s;
+}
+
+.floating-icon:nth-child(4) {
+    bottom: 15%;
+    right: 5%;
+    animation-delay: 3s;
+}
+
+/* Smooth scrolling for all scrollable containers */
+body,
+.dashboard-body,
+.fullscreen-content,
+.chat-messages,
+.profile-modal-body {
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    scroll-behavior: smooth;
+    overscroll-behavior-y: contain; /* Prevent overscroll glow/bounce */
+}
+
+/* Prevent layout shift on mobile */
+html {
+    overflow-x: hidden;
+    width: 100%;
+}
+
+body {
+    position: relative;
+    width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
+}
+
+/* Enhanced mobile UI/UX */
+@media (max-width: 576px) {
+    /* Larger tap targets for mobile */
+    .dashboard-icon {
+        width: 55px;
+        height: 55px;
+        margin: 0 8px;
+    }
+
+    /* Better spacing for mobile */
+    .dashboard-body {
+        padding: 15px;
+    }
+
+    /* Improved form controls */
+    .form-control {
+        padding: 14px 15px 14px 45px;
+        font-size: 16px; /* Larger text for mobile */
+    }
+
+    /* Better button sizing */
+    .btn {
+        padding: 14px;
+    }
+
+    /* Prevent zoom on input focus */
+    input, select, textarea {
+        font-size: 16px;
+    }
+
+    /* Fixed header adjustments */
+    .fixed-header {
+        width: calc(100% - 40px);
+        left: 20px;
+        transform: none;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Fullscreen content adjustments */
+    .fullscreen-content {
+        padding-top: 70px; /* Account for fixed header */
+    }
+
+    /* Chat input improvements */
+    .chat-input-container {
+        padding: 8px;
+    }
+
+    .chat-input {
+        font-size: 16px;
+        padding: 12px 15px;
+    }
+
+    /* Message bubbles */
+    .message {
+        max-width: 85%;
+        padding: 12px 15px;
+    }
+
+    /* Hide floating icons on very small screens */
+    @media (max-width: 400px) {
+        .floating-icon {
+            display: none;
+        }
+    }
+}
+
+/* Performance optimizations */
+* {
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+    backface-visibility: hidden;
+}
+
+/* Prevent scrolling when modal is open */
+body.modal-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+/* Break alert modal styling */
+.break-alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.break-alert-overlay.show {
+    opacity: 1;
+}
+
+.break-alert-modal {
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    width: 90%;
+    max-width: 400px;
+}
+
+.break-alert-modal.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.break-alert-content {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.break-alert-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    justify-content: center;
+}
+
+.break-alert-icon {
+    margin-right: 10px;
+    color: var(--warning);
+    font-size: 1.5rem;
+}
+
+.break-alert-footer {
+    margin-top: 20px;
+}
+
+.break-alert-close-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.break-alert-close-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+    }
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+    body {
+        /* Fix for iOS viewport units */
+        height: -webkit-fill-available;
+    }
+    
+    .dashboard-container {
+        /* Fix for Safari scrolling */
+        min-height: -webkit-fill-available;
+    }
+}
+
+/* Samsung Internet browser fixes */
+@media (-android-) {
+    input, textarea {
+        /* Prevent zoom on focus */
+        font-size: 16px !important;
+    }
+}
+
+/* Prevent double-tap zoom on buttons */
+button, a {
+    touch-action: manipulation;
+}
+
+/* Hide scrollbar but keep functionality */
+::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+}
         /* Break Schedule Styling */
 .break-schedule {
     background: rgba(0, 86, 179, 0.05);
@@ -3691,7 +4046,8 @@
                             alertedBreaks.add(breakKey);
                             showBreakAlert(
                                 `Team Break Ending Soon`, 
-                                `Team ${team.name}'s break is ending at ${formatTime(breakItem.end)}`
+                                `Team ${team.name}'s break is ending at ${formatTime(breakItem.end)}`,
+                                'team'
                             );
                         }
                     });
@@ -3708,7 +4064,8 @@
                                 alertedBreaks.add(breakKey);
                                 showBreakAlert(
                                     `Your Break Ending Soon`, 
-                                    `Your break is ending at ${formatTime(breakItem.end)} (Team: ${team.name})`
+                                    `Your break is ending at ${formatTime(breakItem.end)} (Team: ${team.name})`,
+                                    'individual'
                                 );
                             }
                         }
@@ -3729,38 +4086,72 @@
             return Math.abs(currentTotal - targetTotal) <= rangeMinutes;
         }
 
-        // Show break alert
-        function showBreakAlert(title, message) {
+        // Show break alert - Updated to show centered modal with close button
+        function showBreakAlert(title, message, type) {
+            // Create the alert overlay
+            const alertOverlay = document.createElement('div');
+            alertOverlay.className = 'break-alert-overlay';
+            
+            // Create the alert container
             const breakAlert = document.createElement('div');
-            breakAlert.className = 'break-alert';
+            breakAlert.className = 'break-alert-modal';
+            
+            // Set icon based on alert type
+            const icon = type === 'team' ? 'fa-users' : 'fa-user';
+            
             breakAlert.innerHTML = `
                 <div class="break-alert-content">
                     <div class="break-alert-header">
-                        <i class="fas fa-bell"></i>
-                        <h4>${title}</h4>
-                        <button class="break-alert-close">&times;</button>
+                        <div class="break-alert-icon">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <h3>${title}</h3>
                     </div>
                     <div class="break-alert-body">
-                        ${message}
+                        <p>${message}</p>
+                    </div>
+                    <div class="break-alert-footer">
+                        <button class="break-alert-close-btn ripple">Got it!</button>
                     </div>
                 </div>
             `;
             
-            document.body.appendChild(breakAlert);
+            // Add to DOM
+            alertOverlay.appendChild(breakAlert);
+            document.body.appendChild(alertOverlay);
             
             // Play notification sound
             const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
             audio.play().catch(e => console.log('Audio play failed:', e));
             
-            // Auto-remove after 10 seconds
-            setTimeout(() => {
-                breakAlert.remove();
-            }, 10000);
-            
-            // Close button functionality
-            breakAlert.querySelector('.break-alert-close').addEventListener('click', () => {
-                breakAlert.remove();
+            // Add close functionality
+            const closeBtn = breakAlert.querySelector('.break-alert-close-btn');
+            closeBtn.addEventListener('click', () => {
+                // Animate out
+                breakAlert.style.animation = 'fadeOut 0.3s forwards';
+                alertOverlay.style.animation = 'fadeOut 0.3s forwards';
+                
+                // Remove after animation
+                setTimeout(() => {
+                    alertOverlay.remove();
+                }, 300);
             });
+            
+            // Auto-remove after 30 seconds
+            const autoCloseTimer = setTimeout(() => {
+                closeBtn.click();
+            }, 30000);
+            
+            // Clear timer if manually closed
+            closeBtn.addEventListener('click', () => {
+                clearTimeout(autoCloseTimer);
+            });
+            
+            // Add animation class after a short delay to trigger the animation
+            setTimeout(() => {
+                breakAlert.classList.add('show');
+                alertOverlay.classList.add('show');
+            }, 50);
         }
 
         // Chat modal functionality

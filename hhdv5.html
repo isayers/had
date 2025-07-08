@@ -2545,13 +2545,13 @@ html, body {
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
-  <script> 
+   <!-- Scripts -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
+<script> 
    // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDQfo8qILskxClJy52_19tFdx6xMsiQD2M",
@@ -3748,6 +3748,19 @@ document.addEventListener('DOMContentLoaded', function() {
     let audioChunks = [];
     let isRecording = false;
 
+    // Ensure send button is always visible on mobile
+    function checkMobileView() {
+        if (window.innerWidth <= 768) {
+            chatSendBtn.style.display = 'flex';
+        } else {
+            chatSendBtn.style.display = chatInput.value.trim() ? 'flex' : 'none';
+        }
+    }
+
+    // Initialize mobile view check
+    checkMobileView();
+    window.addEventListener('resize', checkMobileView);
+
     // Chat back button functionality
     chatBackBtn.addEventListener('click', function() {
         chatModal.classList.remove('active');
@@ -4070,6 +4083,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Show/hide send button based on input
+    chatInput.addEventListener('input', function() {
+        if (window.innerWidth > 768) { // Only for desktop
+            chatSendBtn.style.display = this.value.trim() ? 'flex' : 'none';
+        }
+    });
+
     function sendMessage() {
         const messageText = chatInput.value.trim();
         if (!messageText || !currentForumId) return;
@@ -4098,6 +4118,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         savePromise.then(() => {
             chatInput.value = '';
+            if (window.innerWidth > 768) {
+                chatSendBtn.style.display = 'none';
+            }
         })
         .catch(error => {
             console.error('Error sending message:', error);
@@ -4176,7 +4199,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let messageContent = '';
         if (message.text) {
-            messageContent += `<div class="message-content">${message.text}</div>`;
+            // Handle long text with word break
+            const textWithBreaks = message.text.replace(/(.{50})/g, '$1\u200B');
+            messageContent += `<div class="message-content" style="word-break: break-word;">${textWithBreaks}</div>`;
         }
         
         if (message.file) {
@@ -4244,7 +4269,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ${messageContent}
             ${isCurrentUser ? `
             <div class="message-actions">
-                <div class="message-action" onclick="editMessage('${currentForumId}', '${messageId}', '${message.text || ''}', ${currentForumId.includes('_')})">
+                <div class="message-action" onclick="editMessage('${currentForumId}', '${messageId}', ${currentForumId.includes('_')})">
                     <i class="fas fa-edit"></i>
                 </div>
                 <div class="message-action" onclick="deleteMessage('${currentForumId}', '${messageId}', ${currentForumId.includes('_')})">
@@ -4287,7 +4312,20 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Edit message
-    window.editMessage = async function(forumId, messageId, currentText, isPrivateChat) {
+    window.editMessage = async function(forumId, messageId, isPrivateChat) {
+        // Get the current message text
+        let messageRef;
+        if (isPrivateChat) {
+            messageRef = db.collection('privateChats').doc(forumId).collection('messages').doc(messageId);
+        } else {
+            messageRef = db.collection('chatForums').doc(forumId).collection('messages').doc(messageId);
+        }
+        
+        const doc = await messageRef.get();
+        if (!doc.exists) return;
+        
+        const currentText = doc.data().text || '';
+        
         const newText = await customPrompt('Edit your message:', currentText, {
             title: 'Edit Message',
             confirmText: 'Save',
@@ -4295,27 +4333,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         if (newText !== null && newText !== currentText) {
-            let updatePromise;
-            
-            if (isPrivateChat) {
-                updatePromise = db.collection('privateChats').doc(forumId).collection('messages').doc(messageId).update({
+            try {
+                await messageRef.update({
                     text: newText,
                     edited: true
                 });
-            } else {
-                updatePromise = db.collection('chatForums').doc(forumId).collection('messages').doc(messageId).update({
-                    text: newText,
-                    edited: true
-                });
-            }
-            
-            updatePromise.then(() => {
                 console.log('Message updated successfully');
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error updating message:', error);
                 alert('Error updating message. Please try again.');
-            });
+            }
         }
     };
 

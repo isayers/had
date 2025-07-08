@@ -2551,7 +2551,7 @@ html, body {
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
 <script> 
-   // Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDQfo8qILskxClJy52_19tFdx6xMsiQD2M",
     authDomain: "dnata-e2569.firebaseapp.com",
@@ -2592,6 +2592,8 @@ let breakCheckInterval = null;
 let alertedBreaks = new Set();
 let teams = []; // Initialize teams array globally
 let activeBreakAlerts = []; // Track active break alerts
+let notificationSound = null; // Global sound object
+let isSoundAllowed = false; // Track if sound is allowed
 
 // Theme switcher functionality
 const themeSwitcher = document.getElementById('themeSwitcher');
@@ -3594,6 +3596,28 @@ document.addEventListener('DOMContentLoaded', function() {
         return Math.abs(currentTotal - targetTotal) <= rangeMinutes;
     }
 
+    // Initialize notification sound
+    function initNotificationSound() {
+        notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+        notificationSound.load();
+        
+        // Try to play/pause to enable sound in background (this is a hack to work around browser autoplay policies)
+        document.addEventListener('click', function enableSound() {
+            if (!isSoundAllowed) {
+                notificationSound.volume = 0;
+                notificationSound.play().then(() => {
+                    notificationSound.pause();
+                    notificationSound.currentTime = 0;
+                    notificationSound.volume = 1;
+                    isSoundAllowed = true;
+                }).catch(e => {
+                    console.log('Sound initialization failed:', e);
+                });
+                document.removeEventListener('click', enableSound);
+            }
+        }, { once: true });
+    }
+
     // Show break alert with sound and vibration
     function showBreakAlert(title, message, type) {
         // Close any existing alerts of the same type
@@ -3635,17 +3659,28 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(breakAlert);
         activeBreakAlerts.push(breakAlert);
         
-        // Play notification sound
-        try {
-            const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
-            audio.play().catch(e => console.log('Audio play failed:', e));
-        } catch (e) {
-            console.log('Audio error:', e);
+        // Play notification sound if allowed
+        if (isSoundAllowed) {
+            try {
+                if (notificationSound) {
+                    notificationSound.currentTime = 0;
+                    notificationSound.play().catch(e => {
+                        console.log('Sound play failed:', e);
+                        // If play fails, try to reinitialize
+                        initNotificationSound();
+                    });
+                } else {
+                    initNotificationSound();
+                }
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
         }
         
-        // Vibrate device if supported
+        // Vibrate device if supported and allowed
         try {
             if ('vibrate' in navigator) {
+                // Check if vibration is allowed (some browsers require user interaction)
                 navigator.vibrate([200, 100, 200, 100, 200]);
             }
         } catch (e) {
@@ -3727,6 +3762,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // Initialize notification sound when DOM is loaded
+    initNotificationSound();
+
     // Chat modal functionality
     const chatModal = document.getElementById('chatModal');
     const chatBackBtn = document.getElementById('chatBackBtn');
@@ -3747,7 +3785,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let audioChunks = [];
     let isRecording = false;
 
-    // Ensure send button is always visible on mobile
+    // Ensure send button is visible on mobile
     function checkMobileView() {
         if (window.innerWidth <= 768) {
             chatSendBtn.style.display = 'flex';
@@ -4198,9 +4236,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let messageContent = '';
         if (message.text) {
-            // Handle long text with word break
-            const textWithBreaks = message.text.replace(/(.{50})/g, '$1\u200B');
-            messageContent += `<div class="message-content" style="word-break: break-word;">${textWithBreaks}</div>`;
+            // Handle long text messages with word wrap
+            messageContent += `<div class="message-content" style="white-space: pre-wrap; word-wrap: break-word;">${message.text}</div>`;
         }
         
         if (message.file) {
@@ -4268,7 +4305,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ${messageContent}
             ${isCurrentUser ? `
             <div class="message-actions">
-                <div class="message-action" onclick="editMessage('${currentForumId}', '${messageId}', ${currentForumId.includes('_')})">
+                <div class="message-action" onclick="editMessage('${currentForumId}', '${messageId}', '${escapeHtml(message.text || '')}', ${currentForumId.includes('_')})">
                     <i class="fas fa-edit"></i>
                 </div>
                 <div class="message-action" onclick="deleteMessage('${currentForumId}', '${messageId}', ${currentForumId.includes('_')})">
@@ -4279,6 +4316,17 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         return messageElement;
+    }
+
+    // Helper function to escape HTML for editing
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     // Delete message
@@ -4311,37 +4359,42 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Edit message
-    window.editMessage = async function(forumId, messageId, isPrivateChat) {
-        // Get the current message text
-        let messageRef;
-        if (isPrivateChat) {
-            messageRef = db.collection('privateChats').doc(forumId).collection('messages').doc(messageId);
-        } else {
-            messageRef = db.collection('chatForums').doc(forumId).collection('messages').doc(messageId);
-        }
+    window.editMessage = async function(forumId, messageId, currentText, isPrivateChat) {
+        // Unescape HTML entities before showing in prompt
+        const tempElement = document.createElement('textarea');
+        tempElement.innerHTML = currentText;
+        const decodedText = tempElement.value;
         
-        const doc = await messageRef.get();
-        if (!doc.exists) return;
-        
-        const currentText = doc.data().text || '';
-        
-        const newText = await customPrompt('Edit your message:', currentText, {
+        const newText = await customPrompt('Edit your message:', decodedText, {
             title: 'Edit Message',
             confirmText: 'Save',
             icon: 'fa-edit'
         });
         
-        if (newText !== null && newText !== currentText) {
-            try {
-                await messageRef.update({
+        if (newText !== null && newText !== decodedText) {
+            let updatePromise;
+            
+            if (isPrivateChat) {
+                updatePromise = db.collection('privateChats').doc(forumId).collection('messages').doc(messageId).update({
                     text: newText,
-                    edited: true
+                    edited: true,
+                    lastEdited: firebase.firestore.FieldValue.serverTimestamp()
                 });
+            } else {
+                updatePromise = db.collection('chatForums').doc(forumId).collection('messages').doc(messageId).update({
+                    text: newText,
+                    edited: true,
+                    lastEdited: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            
+            updatePromise.then(() => {
                 console.log('Message updated successfully');
-            } catch (error) {
+            })
+            .catch(error => {
                 console.error('Error updating message:', error);
                 alert('Error updating message. Please try again.');
-            }
+            });
         }
     };
 

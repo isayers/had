@@ -2544,15 +2544,14 @@ html, body {
             <button class="btn btn-primary btn-block" id="logoutBtn">Sign Out</button>
         </div>
     </div>
-
-   <!-- Scripts -->
+<!-- Scripts -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
 <script> 
-// Firebase configuration
+   // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDQfo8qILskxClJy52_19tFdx6xMsiQD2M",
     authDomain: "dnata-e2569.firebaseapp.com",
@@ -3748,7 +3747,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let audioChunks = [];
     let isRecording = false;
 
-    // Ensure send button is visible on mobile
+    // Ensure send button is always visible on mobile
     function checkMobileView() {
         if (window.innerWidth <= 768) {
             chatSendBtn.style.display = 'flex';
@@ -4199,8 +4198,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let messageContent = '';
         if (message.text) {
-            // Handle long text messages with word wrap
-            messageContent += `<div class="message-content" style="white-space: pre-wrap; word-wrap: break-word;">${message.text}</div>`;
+            // Handle long text with word break
+            const textWithBreaks = message.text.replace(/(.{50})/g, '$1\u200B');
+            messageContent += `<div class="message-content" style="word-break: break-word;">${textWithBreaks}</div>`;
         }
         
         if (message.file) {
@@ -4268,7 +4268,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ${messageContent}
             ${isCurrentUser ? `
             <div class="message-actions">
-                <div class="message-action" onclick="editMessage('${currentForumId}', '${messageId}', '${escapeHtml(message.text || '')}', ${currentForumId.includes('_')})">
+                <div class="message-action" onclick="editMessage('${currentForumId}', '${messageId}', ${currentForumId.includes('_')})">
                     <i class="fas fa-edit"></i>
                 </div>
                 <div class="message-action" onclick="deleteMessage('${currentForumId}', '${messageId}', ${currentForumId.includes('_')})">
@@ -4279,17 +4279,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         return messageElement;
-    }
-
-    // Helper function to escape HTML for editing
-    function escapeHtml(unsafe) {
-        if (!unsafe) return '';
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
     }
 
     // Delete message
@@ -4322,42 +4311,37 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Edit message
-    window.editMessage = async function(forumId, messageId, currentText, isPrivateChat) {
-        // Unescape HTML entities before showing in prompt
-        const tempElement = document.createElement('textarea');
-        tempElement.innerHTML = currentText;
-        const decodedText = tempElement.value;
+    window.editMessage = async function(forumId, messageId, isPrivateChat) {
+        // Get the current message text
+        let messageRef;
+        if (isPrivateChat) {
+            messageRef = db.collection('privateChats').doc(forumId).collection('messages').doc(messageId);
+        } else {
+            messageRef = db.collection('chatForums').doc(forumId).collection('messages').doc(messageId);
+        }
         
-        const newText = await customPrompt('Edit your message:', decodedText, {
+        const doc = await messageRef.get();
+        if (!doc.exists) return;
+        
+        const currentText = doc.data().text || '';
+        
+        const newText = await customPrompt('Edit your message:', currentText, {
             title: 'Edit Message',
             confirmText: 'Save',
             icon: 'fa-edit'
         });
         
-        if (newText !== null && newText !== decodedText) {
-            let updatePromise;
-            
-            if (isPrivateChat) {
-                updatePromise = db.collection('privateChats').doc(forumId).collection('messages').doc(messageId).update({
+        if (newText !== null && newText !== currentText) {
+            try {
+                await messageRef.update({
                     text: newText,
-                    edited: true,
-                    lastEdited: firebase.firestore.FieldValue.serverTimestamp()
+                    edited: true
                 });
-            } else {
-                updatePromise = db.collection('chatForums').doc(forumId).collection('messages').doc(messageId).update({
-                    text: newText,
-                    edited: true,
-                    lastEdited: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-            
-            updatePromise.then(() => {
                 console.log('Message updated successfully');
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error updating message:', error);
                 alert('Error updating message. Please try again.');
-            });
+            }
         }
     };
 
@@ -4988,5 +4972,6 @@ document.addEventListener('DOMContentLoaded', function() {
     globalBackButton.style.display = 'none';
 });
 </script>
+   
 </body>
 </html>

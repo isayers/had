@@ -2557,7 +2557,7 @@ const firebaseConfig = {
     authDomain: "dnata-e2569.firebaseapp.com",
     databaseURL: "https://dnata-e2569-default-rtdb.firebaseio.com",
     projectId: "dnata-e2569",
-    storageBucket: "dnata-e2569.appspot.com",
+    storageBucket: "dnata-e2569.firebasestorage.app",
     messagingSenderId: "693382423789",
     appId: "1:693382423789:web:8aa14672c6ef34ee59d8e4",
     measurementId: "G-B6F7CHPM2Y"
@@ -2592,36 +2592,6 @@ let breakCheckInterval = null;
 let alertedBreaks = new Set();
 let teams = []; // Initialize teams array globally
 let activeBreakAlerts = []; // Track active break alerts
-let audioContext; // For playing sounds
-let breakSound; // Sound for break alerts
-
-// Initialize audio context on user interaction
-function initAudio() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Load break sound
-        fetch('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3')
-            .then(response => response.arrayBuffer())
-            .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-            .then(audioBuffer => {
-                breakSound = audioBuffer;
-            })
-            .catch(error => {
-                console.error('Error loading sound:', error);
-            });
-    }
-}
-
-// Play sound function
-function playSound(buffer) {
-    if (!audioContext || !buffer) return;
-    
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
-    source.start(0);
-}
 
 // Theme switcher functionality
 const themeSwitcher = document.getElementById('themeSwitcher');
@@ -2747,9 +2717,6 @@ window.customPrompt = async (message, defaultValue = '', options = {}) => {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize audio on first user interaction
-    document.addEventListener('click', initAudio, { once: true });
-    
     // Fixed header elements
     const fixedHeader = document.querySelector('.fixed-header');
     const headerTitle = document.getElementById('headerTitle');
@@ -3670,13 +3637,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Play notification sound
         try {
-            if (breakSound) {
-                playSound(breakSound);
-            } else {
-                // Fallback to HTML5 Audio if Web Audio API isn't ready
-                const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
-                audio.play().catch(e => console.log('Audio play failed:', e));
-            }
+            const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+            audio.play().catch(e => console.log('Audio play failed:', e));
         } catch (e) {
             console.log('Audio error:', e);
         }
@@ -3684,7 +3646,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Vibrate device if supported
         try {
             if ('vibrate' in navigator) {
-                // Vibrate pattern: 200ms on, 100ms off, 200ms on, 100ms off, 200ms on
                 navigator.vibrate([200, 100, 200, 100, 200]);
             }
         } catch (e) {

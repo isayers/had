@@ -2570,21 +2570,39 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
+// OneSignal configuration
+const OneSignalAppId = "8e997ba2-12d1-4d7b-86f5-608d9bf30a56";
+const OneSignalApiKey = "os_v2_app_r2mxxiqs2fgxxbxvmcgzx4ykkyoyqqjupcoerwvga7cpdam66tnoxcptb2cco4qo7ert4gyu4lak4ggsthudg5ny7wqjykhlg3re7oy";
+
 // Initialize OneSignal
-const OneSignal = window.OneSignal || [];
-OneSignal.push(function() {
-    OneSignal.init({
-        appId: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
-        safari_web_id: "web.onesignal.auto.1d6b1e9e-4a2b-4e1d-9c1a-5e5a5e5a5e5a",
-        notifyButton: {
-            enable: false
-        },
-        allowLocalhostAsSecureOrigin: true,
-    });
-    
-    // Request notification permission
-    OneSignal.showSlidedownPrompt();
-});
+function initializeOneSignal(userId) {
+    // Check if OneSignal is already initialized
+    if (window.OneSignal) {
+        OneSignal.init({
+            appId: OneSignalAppId,
+            safari_web_id: 'web.onesignal.auto.8e997ba2-12d1-4d7b-86f5-608d9bf30a56',
+            notifyButton: {
+                enable: false
+            },
+            allowLocalhostAsSecureOrigin: true,
+        }).then(() => {
+            // Set external user ID for the current user
+            OneSignal.setExternalUserId(userId).then(() => {
+                console.log("OneSignal external user ID set:", userId);
+            }).catch(error => {
+                console.error("Error setting OneSignal external user ID:", error);
+            });
+            
+            // Set subscription to true
+            OneSignal.setSubscription(true);
+            
+            // Register for push notifications
+            OneSignal.registerForPushNotifications();
+        });
+    } else {
+        console.warn("OneSignal not loaded yet");
+    }
+}
 
 // Initialize loading animation
 const loadingAnimation = document.getElementById('loadingAnimation');
@@ -2609,7 +2627,7 @@ let breakCheckInterval = null;
 let alertedBreaks = new Set();
 let teams = []; // Initialize teams array globally
 let activeBreakAlerts = []; // Track active break alerts
-let currentUserId = null; // Track current user ID globally
+let currentUserId = ''; // Store current user ID globally
 
 // Theme switcher functionality
 const themeSwitcher = document.getElementById('themeSwitcher');
@@ -2733,6 +2751,36 @@ window.customPrompt = async (message, defaultValue = '', options = {}) => {
     
     return result.confirmed ? result.value : null;
 };
+
+// Function to send push notification via OneSignal
+async function sendPushNotification(userId, title, message, data = {}) {
+    try {
+        const response = await fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Basic ${OneSignalApiKey}`
+            },
+            body: JSON.stringify({
+                app_id: OneSignalAppId,
+                include_external_user_ids: [userId],
+                headings: { en: title },
+                contents: { en: message },
+                data: data,
+                android_channel_id: "d0f1c1a0-9b9a-4b9a-8b9a-9b9a4b9a8b9a",
+                small_icon: "ic_stat_onesignal_default",
+                large_icon: "https://dnata-e2569.firebaseapp.com/images/logo.png"
+            })
+        });
+
+        const result = await response.json();
+        console.log('Push notification sent:', result);
+        return result;
+    } catch (error) {
+        console.error('Error sending push notification:', error);
+        return null;
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Fixed header elements
@@ -3068,75 +3116,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(() => {
                 // Open the chat
                 openPrivateChat(chatId, employeeId);
-                
-                // Subscribe to new message notifications for this chat
-                subscribeToChatNotifications(chatId, employeeId);
             })
             .catch(error => {
                 console.error('Error starting private chat:', error);
                 alert('Error starting private chat. Please try again.');
             });
-    }
-
-    // Subscribe to chat notifications
-    function subscribeToChatNotifications(chatId, participantId) {
-        const user = auth.currentUser;
-        if (!user) return;
-        
-        const currentUserId = user.email.split('@')[0];
-        
-        // Get the participant's OneSignal player ID
-        db.collection('employees').doc(participantId).get()
-            .then(doc => {
-                if (doc.exists) {
-                    const participant = doc.data();
-                    if (participant.oneSignalPlayerId) {
-                        // Subscribe to this chat's messages
-                        db.collection('privateChats').doc(chatId)
-                            .collection('messages')
-                            .orderBy('timestamp', 'desc')
-                            .limit(1)
-                            .onSnapshot(snapshot => {
-                                if (!snapshot.empty) {
-                                    const message = snapshot.docs[0].data();
-                                    
-                                    // Don't notify if the message is from the current user
-                                    if (message.sender !== currentUserId) {
-                                        // Send push notification to the participant
-                                        sendPushNotification(
-                                            participant.oneSignalPlayerId,
-                                            'New Message',
-                                            `You have a new message from ${currentUserId}`,
-                                            {
-                                                chatId: chatId,
-                                                type: 'private_message',
-                                                senderId: currentUserId
-                                            }
-                                        );
-                                    }
-                                }
-                            });
-                    }
-                }
-            });
-    }
-
-    // Send push notification via OneSignal
-    function sendPushNotification(playerId, title, message, data = {}) {
-        if (!window.OneSignal) {
-            console.log('OneSignal not available');
-            return;
-        }
-        
-        OneSignal.push(function() {
-            OneSignal.createNotification({
-                headings: { en: title },
-                contents: { en: message },
-                include_player_ids: [playerId],
-                data: data,
-                android_channel_id: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56"
-            });
-        });
     }
 
     function openPrivateChat(chatId, employeeId) {
@@ -3601,7 +3585,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         );
                         
                         // Send push notification
-                        sendBreakPushNotification(team.name, breakItem.start, 'team');
+                        sendPushNotification(
+                            currentUserId,
+                            `Team Break Starting Soon`,
+                            `Team ${team.name}'s break starts at ${formatTime(breakItem.start)}`,
+                            { type: 'break', breakType: 'team', action: 'start', teamId: team.id }
+                        );
                     }
                     
                     // Check if break has just started
@@ -3612,6 +3601,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             `Team ${team.name}'s break has started! Enjoy your break until ${formatTime(breakItem.end)}`,
                             'team'
                         );
+                        
+                        // Send push notification
+                        sendPushNotification(
+                            currentUserId,
+                            `Team Break Started`,
+                            `Team ${team.name}'s break has started! Enjoy your break until ${formatTime(breakItem.end)}`,
+                            { type: 'break', breakType: 'team', action: 'started', teamId: team.id }
+                        );
                     }
                     
                     // Check if break is ending within 5 minutes
@@ -3621,6 +3618,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             `Team Break Ending Soon`, 
                             `Team ${team.name}'s break ends at ${formatTime(breakItem.end)}`,
                             'team'
+                        );
+                        
+                        // Send push notification
+                        sendPushNotification(
+                            currentUserId,
+                            `Team Break Ending Soon`,
+                            `Team ${team.name}'s break ends at ${formatTime(breakItem.end)}`,
+                            { type: 'break', breakType: 'team', action: 'end', teamId: team.id }
                         );
                     }
                 });
@@ -3642,7 +3647,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             );
                             
                             // Send push notification
-                            sendBreakPushNotification(team.name, breakItem.start, 'individual');
+                            sendPushNotification(
+                                currentUserId,
+                                `Your Break Starting Soon`,
+                                `Your break starts at ${formatTime(breakItem.start)} (Team: ${team.name})`,
+                                { type: 'break', breakType: 'individual', action: 'start', teamId: team.id }
+                            );
                         }
                         
                         // Check if break has just started
@@ -3652,6 +3662,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 `Your Break Started`, 
                                 `Your break has started! Enjoy your break until ${formatTime(breakItem.end)} (Team: ${team.name})`,
                                 'individual'
+                            );
+                            
+                            // Send push notification
+                            sendPushNotification(
+                                currentUserId,
+                                `Your Break Started`,
+                                `Your break has started! Enjoy your break until ${formatTime(breakItem.end)} (Team: ${team.name})`,
+                                { type: 'break', breakType: 'individual', action: 'started', teamId: team.id }
                             );
                         }
                         
@@ -3663,48 +3681,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 `Your break ends at ${formatTime(breakItem.end)} (Team: ${team.name})`,
                                 'individual'
                             );
+                            
+                            // Send push notification
+                            sendPushNotification(
+                                currentUserId,
+                                `Your Break Ending Soon`,
+                                `Your break ends at ${formatTime(breakItem.end)} (Team: ${team.name})`,
+                                { type: 'break', breakType: 'individual', action: 'end', teamId: team.id }
+                            );
                         }
                     }
                 });
             }
         });
-    }
-
-    // Send break push notification
-    function sendBreakPushNotification(teamName, breakTime, breakType) {
-        const user = auth.currentUser;
-        if (!user || !window.OneSignal) return;
-        
-        const currentUserId = user.email.split('@')[0];
-        
-        // Get the user's OneSignal player ID
-        db.collection('employees').doc(currentUserId).get()
-            .then(doc => {
-                if (doc.exists) {
-                    const employee = doc.data();
-                    if (employee.oneSignalPlayerId) {
-                        const title = breakType === 'team' ? 
-                            `Team Break Starting Soon` : 
-                            `Your Break Starting Soon`;
-                            
-                        const message = breakType === 'team' ?
-                            `Team ${teamName}'s break starts at ${formatTime(breakTime)}` :
-                            `Your break starts at ${formatTime(breakTime)} (Team: ${teamName})`;
-                            
-                        sendPushNotification(
-                            employee.oneSignalPlayerId,
-                            title,
-                            message,
-                            {
-                                type: 'break_notification',
-                                breakType: breakType,
-                                teamName: teamName,
-                                breakTime: breakTime
-                            }
-                        );
-                    }
-                }
-            });
     }
 
     // Check if time is within range of target time (in minutes)
@@ -4076,6 +4065,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     sender: username,
                     timestamp: timestamp
                 });
+                
+                // Send push notification to the other participant
+                const chatIdParts = currentForumId.split('_');
+                const otherUserId = chatIdParts[0] === username ? chatIdParts[1] : chatIdParts[0];
+                
+                sendPushNotification(
+                    otherUserId,
+                    `New Voice Message`,
+                    `${username} sent you a voice message`,
+                    { type: 'message', forumId: currentForumId, forumName: chatForumTitle.textContent }
+                );
             } else {
                 // Forum chat
                 await db.collection('chatForums').doc(currentForumId).collection('messages').add({
@@ -4086,6 +4086,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     sender: username,
                     timestamp: timestamp
                 });
+                
+                // Send push notification to all forum members
+                const forumDoc = await db.collection('chatForums').doc(currentForumId).get();
+                if (forumDoc.exists) {
+                    const forum = forumDoc.data();
+                    if (forum.members && forum.members.length > 0) {
+                        forum.members.forEach(member => {
+                            if (member !== username) {
+                                sendPushNotification(
+                                    member,
+                                    `New Voice Message in ${forum.name}`,
+                                    `${username} sent a voice message`,
+                                    { type: 'message', forumId: currentForumId, forumName: forum.name }
+                                );
+                            }
+                        });
+                    }
+                }
             }
             
         } catch (error) {
@@ -4161,6 +4179,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             sender: username,
                             timestamp: timestamp
                         });
+                        
+                        // Send push notification to the other participant
+                        const chatIdParts = currentForumId.split('_');
+                        const otherUserId = chatIdParts[0] === username ? chatIdParts[1] : chatIdParts[0];
+                        
+                        sendPushNotification(
+                            otherUserId,
+                            `New File Shared`,
+                            `${username} sent you a file`,
+                            { type: 'message', forumId: currentForumId, forumName: chatForumTitle.textContent }
+                        );
                     } else {
                         savePromise = db.collection('chatForums').doc(currentForumId).collection('messages').add({
                             file: {
@@ -4171,6 +4200,24 @@ document.addEventListener('DOMContentLoaded', function() {
                             sender: username,
                             timestamp: timestamp
                         });
+                        
+                        // Send push notification to all forum members
+                        const forumDoc = await db.collection('chatForums').doc(currentForumId).get();
+                        if (forumDoc.exists) {
+                            const forum = forumDoc.data();
+                            if (forum.members && forum.members.length > 0) {
+                                forum.members.forEach(member => {
+                                    if (member !== username) {
+                                        sendPushNotification(
+                                            member,
+                                            `New File in ${forum.name}`,
+                                            `${username} shared a file`,
+                                            { type: 'message', forumId: currentForumId, forumName: forum.name }
+                                        );
+                                    }
+                                });
+                            }
+                        }
                     }
                     
                     savePromise.then(() => {
@@ -4212,11 +4259,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 sender: username,
                 timestamp: timestamp
             });
+            
+            // Send push notification to the other participant
+            const chatIdParts = currentForumId.split('_');
+            const otherUserId = chatIdParts[0] === username ? chatIdParts[1] : chatIdParts[0];
+            
+            sendPushNotification(
+                otherUserId,
+                `New Message from ${username}`,
+                messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText,
+                { type: 'message', forumId: currentForumId, forumName: chatForumTitle.textContent }
+            );
         } else {
             savePromise = db.collection('chatForums').doc(currentForumId).collection('messages').add({
                 text: messageText,
                 sender: username,
                 timestamp: timestamp
+            });
+            
+            // Send push notification to all forum members
+            db.collection('chatForums').doc(currentForumId).get().then(forumDoc => {
+                if (forumDoc.exists) {
+                    const forum = forumDoc.data();
+                    if (forum.members && forum.members.length > 0) {
+                        forum.members.forEach(member => {
+                            if (member !== username) {
+                                sendPushNotification(
+                                    member,
+                                    `New Message in ${forum.name}`,
+                                    `${username}: ${messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText}`,
+                                    { type: 'message', forumId: currentForumId, forumName: forum.name }
+                                );
+                            }
+                        });
+                    }
+                }
             });
         }
         
@@ -4793,10 +4870,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Set user avatar initials
             const email = user.email.split('@')[0];
-            currentUserId = email;
+            currentUserId = email; // Store current user ID
             
-            // Register OneSignal player ID for this user
-            registerOneSignalPlayerId(email);
+            // Initialize OneSignal
+            initializeOneSignal(email);
             
             db.collection('employees').doc(email).get()
                 .then(doc => {
@@ -4855,29 +4932,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 400);
     }
 
-    // Register OneSignal player ID for the user
-    function registerOneSignalPlayerId(userId) {
-        if (!window.OneSignal) {
-            console.log('OneSignal not available');
-            return;
-        }
-        
-        OneSignal.push(function() {
-            OneSignal.getUserId(function(playerId) {
-                if (playerId) {
-                    // Save the player ID to the user's profile in Firestore
-                    db.collection('employees').doc(userId).update({
-                        oneSignalPlayerId: playerId
-                    }).then(() => {
-                        console.log('OneSignal player ID saved for user:', userId);
-                    }).catch(error => {
-                        console.error('Error saving OneSignal player ID:', error);
-                    });
-                }
-            });
-        });
-    }
-
     // Logout functionality
     function logoutUser() {
         // Clear break check interval
@@ -4910,7 +4964,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 loginContainer.style.display = 'block';
                 document.getElementById('username').value = '';
                 document.getElementById('password').value = '';
-                currentUserId = null;
                 
                 // Hide any open fullscreen content
                 hideFullscreenContent();
@@ -5073,8 +5126,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // User is signed in, check if password needs to be changed
             const username = user.email.split('@')[0];
-            currentUserId = username;
-            
             db.collection('employees').doc(username).get()
                 .then((doc) => {
                     if (doc.exists) {
@@ -5093,7 +5144,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // Hide dashboard floating icons when logged out
             hideFullscreenContent();
-            currentUserId = null;
         }
     });
 

@@ -1632,7 +1632,9 @@ html, body {
             font-size: 1.2rem;
         }
 
+        /* New floating action menu styles */
         .chat-actions {
+            position: relative;
             display: flex;
             gap: 5px;
         }
@@ -1655,6 +1657,58 @@ html, body {
         }
 
         .chat-action-btn i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .action-menu {
+            position: absolute;
+            bottom: 50px;
+            left: 0;
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .action-menu.active {
+            display: flex;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .action-menu-item {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-menu-item:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .action-menu-item i {
             color: var(--primary);
             font-size: 1.1rem;
         }
@@ -2426,16 +2480,21 @@ html, body {
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-container">
             <div class="chat-actions">
-                <button class="chat-action-btn" id="fileUploadBtn">
-                    <i class="fas fa-paperclip"></i>
-                    <input type="file" id="fileUploadInput" style="display: none;">
+                <button class="chat-action-btn" id="actionMenuBtn">
+                    <i class="fas fa-plus"></i>
                 </button>
-                <button class="chat-action-btn" id="cameraUploadBtn">
-                    <i class="fas fa-camera"></i>
-                </button>
-                <button class="chat-action-btn" id="voiceRecordBtn">
-                    <i class="fas fa-microphone"></i>
-                </button>
+                <div class="action-menu" id="actionMenu">
+                    <button class="action-menu-item" id="fileUploadBtn">
+                        <i class="fas fa-paperclip"></i>
+                        <input type="file" id="fileUploadInput" style="display: none;">
+                    </button>
+                    <button class="action-menu-item" id="cameraUploadBtn">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                    <button class="action-menu-item" id="voiceRecordBtn">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
                 <div class="recording-indicator" id="recordingIndicator">
                     <div class="recording-dot"></div>
                     <span>Recording</span>
@@ -2544,15 +2603,14 @@ html, body {
             <button class="btn btn-primary btn-block" id="logoutBtn">Sign Out</button>
         </div>
     </div>
-
-    <!-- Scripts -->
+ <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
- <script>
-// Firebase configuration
+  <script> 
+   // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDQfo8qILskxClJy52_19tFdx6xMsiQD2M",
     authDomain: "dnata-e2569.firebaseapp.com",
@@ -2569,27 +2627,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
-
-// Initialize OneSignal for push notifications
-window.OneSignal = window.OneSignal || [];
-OneSignal.push(function() {
-    OneSignal.init({
-        appId: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
-        safari_web_id: "web.onesignal.auto.8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
-        notifyButton: {
-            enable: false
-        },
-        allowLocalhostAsSecureOrigin: true
-    });
-    
-    // Check if user is logged in to set external user ID
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            const userId = user.email.split('@')[0];
-            OneSignal.setExternalUserId(userId);
-        }
-    });
-});
 
 // Initialize loading animation
 const loadingAnimation = document.getElementById('loadingAnimation');
@@ -3072,66 +3109,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(() => {
                 // Open the chat
                 openPrivateChat(chatId, employeeId);
-                
-                // Send push notification to the other user
-                sendPushNotification(
-                    employeeId,
-                    'New Message',
-                    `You have a new message from ${currentUserId}`,
-                    { 
-                        chatId: chatId,
-                        type: 'new_message'
-                    }
-                );
             })
             .catch(error => {
                 console.error('Error starting private chat:', error);
                 alert('Error starting private chat. Please try again.');
-            });
-    }
-
-    // Function to send push notifications
-    function sendPushNotification(userId, title, message, data = {}) {
-        // Send via OneSignal
-        OneSignal.push(function() {
-            OneSignal.sendTags({
-                userId: userId
-            }).then(function() {
-                OneSignal.push(function() {
-                    OneSignal.sendSelfNotification({
-                        app_id: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
-                        headings: { en: title },
-                        contents: { en: message },
-                        data: data,
-                        include_player_ids: [userId]
-                    });
-                });
-            });
-        });
-        
-        // Fallback to Firebase if OneSignal fails
-        db.collection('employees').doc(userId).get()
-            .then(doc => {
-                if (doc.exists) {
-                    const fcmToken = doc.data().fcmToken;
-                    if (fcmToken) {
-                        fetch('https://fcm.googleapis.com/fcm/send', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'key=os_v2_app_r2mxxiqs2fgxxbxvmcgzx4ykkyoyqqjupcoerwvga7cpdam66tnoxcptb2cco4qo7ert4gyu4lak4ggsthudg5ny7wqjykhlg3re7oy'
-                            },
-                            body: JSON.stringify({
-                                to: fcmToken,
-                                notification: {
-                                    title: title,
-                                    body: message
-                                },
-                                data: data
-                            })
-                        });
-                    }
-                }
             });
     }
 
@@ -3590,66 +3571,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Check if break is starting within 5 minutes
                     if (isTimeWithinRange(currentTime, breakItem.start, 5) && !alertedBreaks.has(`start-${breakKey}`)) {
                         alertedBreaks.add(`start-${breakKey}`);
-                        const notificationTitle = `Team Break Starting Soon`;
-                        const notificationMessage = `Team ${team.name}'s break starts at ${formatTime(breakItem.start)}`;
-                        
-                        showBreakAlert(notificationTitle, notificationMessage, 'team');
-                        
-                        // Send push notification
-                        sendPushNotification(
-                            currentUserId,
-                            notificationTitle,
-                            notificationMessage,
-                            {
-                                type: 'break_alert',
-                                breakType: 'team',
-                                teamId: team.id,
-                                action: 'starting'
-                            }
+                        showBreakAlert(
+                            `Team Break Starting Soon`, 
+                            `Team ${team.name}'s break starts at ${formatTime(breakItem.start)}`,
+                            'team'
                         );
                     }
                     
                     // Check if break has just started
                     if (isTimeWithinRange(currentTime, breakItem.start, 1) && !alertedBreaks.has(`started-${breakKey}`)) {
                         alertedBreaks.add(`started-${breakKey}`);
-                        const notificationTitle = `Team Break Started`;
-                        const notificationMessage = `Team ${team.name}'s break has started! Enjoy your break until ${formatTime(breakItem.end)}`;
-                        
-                        showBreakAlert(notificationTitle, notificationMessage, 'team');
-                        
-                        // Send push notification
-                        sendPushNotification(
-                            currentUserId,
-                            notificationTitle,
-                            notificationMessage,
-                            {
-                                type: 'break_alert',
-                                breakType: 'team',
-                                teamId: team.id,
-                                action: 'started'
-                            }
+                        showBreakAlert(
+                            `Team Break Started`, 
+                            `Team ${team.name}'s break has started! Enjoy your break until ${formatTime(breakItem.end)}`,
+                            'team'
                         );
                     }
                     
                     // Check if break is ending within 5 minutes
                     if (isTimeWithinRange(currentTime, breakItem.end, 5) && !alertedBreaks.has(`end-${breakKey}`)) {
                         alertedBreaks.add(`end-${breakKey}`);
-                        const notificationTitle = `Team Break Ending Soon`;
-                        const notificationMessage = `Team ${team.name}'s break ends at ${formatTime(breakItem.end)}`;
-                        
-                        showBreakAlert(notificationTitle, notificationMessage, 'team');
-                        
-                        // Send push notification
-                        sendPushNotification(
-                            currentUserId,
-                            notificationTitle,
-                            notificationMessage,
-                            {
-                                type: 'break_alert',
-                                breakType: 'team',
-                                teamId: team.id,
-                                action: 'ending'
-                            }
+                        showBreakAlert(
+                            `Team Break Ending Soon`, 
+                            `Team ${team.name}'s break ends at ${formatTime(breakItem.end)}`,
+                            'team'
                         );
                     }
                 });
@@ -3664,66 +3609,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Check if break is starting within 5 minutes
                         if (isTimeWithinRange(currentTime, breakItem.start, 5) && !alertedBreaks.has(`start-${breakKey}`)) {
                             alertedBreaks.add(`start-${breakKey}`);
-                            const notificationTitle = `Your Break Starting Soon`;
-                            const notificationMessage = `Your break starts at ${formatTime(breakItem.start)} (Team: ${team.name})`;
-                            
-                            showBreakAlert(notificationTitle, notificationMessage, 'individual');
-                            
-                            // Send push notification
-                            sendPushNotification(
-                                currentUserId,
-                                notificationTitle,
-                                notificationMessage,
-                                {
-                                    type: 'break_alert',
-                                    breakType: 'individual',
-                                    teamId: team.id,
-                                    action: 'starting'
-                                }
+                            showBreakAlert(
+                                `Your Break Starting Soon`, 
+                                `Your break starts at ${formatTime(breakItem.start)} (Team: ${team.name})`,
+                                'individual'
                             );
                         }
                         
                         // Check if break has just started
                         if (isTimeWithinRange(currentTime, breakItem.start, 1) && !alertedBreaks.has(`started-${breakKey}`)) {
                             alertedBreaks.add(`started-${breakKey}`);
-                            const notificationTitle = `Your Break Started`;
-                            const notificationMessage = `Your break has started! Enjoy your break until ${formatTime(breakItem.end)} (Team: ${team.name})`;
-                            
-                            showBreakAlert(notificationTitle, notificationMessage, 'individual');
-                            
-                            // Send push notification
-                            sendPushNotification(
-                                currentUserId,
-                                notificationTitle,
-                                notificationMessage,
-                                {
-                                    type: 'break_alert',
-                                    breakType: 'individual',
-                                    teamId: team.id,
-                                    action: 'started'
-                                }
+                            showBreakAlert(
+                                `Your Break Started`, 
+                                `Your break has started! Enjoy your break until ${formatTime(breakItem.end)} (Team: ${team.name})`,
+                                'individual'
                             );
                         }
                         
                         // Check if break is ending within 5 minutes
                         if (isTimeWithinRange(currentTime, breakItem.end, 5) && !alertedBreaks.has(`end-${breakKey}`)) {
                             alertedBreaks.add(`end-${breakKey}`);
-                            const notificationTitle = `Your Break Ending Soon`;
-                            const notificationMessage = `Your break ends at ${formatTime(breakItem.end)} (Team: ${team.name})`;
-                            
-                            showBreakAlert(notificationTitle, notificationMessage, 'individual');
-                            
-                            // Send push notification
-                            sendPushNotification(
-                                currentUserId,
-                                notificationTitle,
-                                notificationMessage,
-                                {
-                                    type: 'break_alert',
-                                    breakType: 'individual',
-                                    teamId: team.id,
-                                    action: 'ending'
-                                }
+                            showBreakAlert(
+                                `Your Break Ending Soon`, 
+                                `Your break ends at ${formatTime(breakItem.end)} (Team: ${team.name})`,
+                                'individual'
                             );
                         }
                     }
@@ -4101,20 +4010,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     sender: username,
                     timestamp: timestamp
                 });
-                
-                // Send push notification to the other participant
-                const chatParts = currentForumId.split('_');
-                const recipientId = chatParts[0] === username ? chatParts[1] : chatParts[0];
-                
-                sendPushNotification(
-                    recipientId,
-                    'New Voice Message',
-                    `You have a new voice message from ${username}`,
-                    {
-                        chatId: currentForumId,
-                        type: 'new_message'
-                    }
-                );
             } else {
                 // Forum chat
                 await db.collection('chatForums').doc(currentForumId).collection('messages').add({
@@ -4125,27 +4020,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     sender: username,
                     timestamp: timestamp
                 });
-                
-                // Send push notification to all forum members
-                const forumDoc = await db.collection('chatForums').doc(currentForumId).get();
-                if (forumDoc.exists) {
-                    const forum = forumDoc.data();
-                    if (forum.members && forum.members.length > 0) {
-                        forum.members.forEach(memberId => {
-                            if (memberId !== username) {
-                                sendPushNotification(
-                                    memberId,
-                                    'New Voice Message',
-                                    `New voice message in ${forum.name}`,
-                                    {
-                                        chatId: currentForumId,
-                                        type: 'forum_message'
-                                    }
-                                );
-                            }
-                        });
-                    }
-                }
             }
             
         } catch (error) {
@@ -4221,20 +4095,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             sender: username,
                             timestamp: timestamp
                         });
-                        
-                        // Send push notification to the other participant
-                        const chatParts = currentForumId.split('_');
-                        const recipientId = chatParts[0] === username ? chatParts[1] : chatParts[0];
-                        
-                        sendPushNotification(
-                            recipientId,
-                            'New File Shared',
-                            `${username} shared a file with you`,
-                            {
-                                chatId: currentForumId,
-                                type: 'new_message'
-                            }
-                        );
                     } else {
                         savePromise = db.collection('chatForums').doc(currentForumId).collection('messages').add({
                             file: {
@@ -4245,29 +4105,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             sender: username,
                             timestamp: timestamp
                         });
-                        
-                        // Send push notification to all forum members
-                        db.collection('chatForums').doc(currentForumId).get()
-                            .then(forumDoc => {
-                                if (forumDoc.exists) {
-                                    const forum = forumDoc.data();
-                                    if (forum.members && forum.members.length > 0) {
-                                        forum.members.forEach(memberId => {
-                                            if (memberId !== username) {
-                                                sendPushNotification(
-                                                    memberId,
-                                                    'New File Shared',
-                                                    `New file shared in ${forum.name}`,
-                                                    {
-                                                        chatId: currentForumId,
-                                                        type: 'forum_message'
-                                                    }
-                                                );
-                                            }
-                                        });
-                                    }
-                                }
-                            });
                     }
                     
                     savePromise.then(() => {
@@ -4309,49 +4146,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 sender: username,
                 timestamp: timestamp
             });
-            
-            // Send push notification to the other participant
-            const chatParts = currentForumId.split('_');
-            const recipientId = chatParts[0] === username ? chatParts[1] : chatParts[0];
-            
-            sendPushNotification(
-                recipientId,
-                'New Message',
-                `New message from ${username}`,
-                {
-                    chatId: currentForumId,
-                    type: 'new_message'
-                }
-            );
         } else {
             savePromise = db.collection('chatForums').doc(currentForumId).collection('messages').add({
                 text: messageText,
                 sender: username,
                 timestamp: timestamp
             });
-            
-            // Send push notification to all forum members
-            db.collection('chatForums').doc(currentForumId).get()
-                .then(forumDoc => {
-                    if (forumDoc.exists) {
-                        const forum = forumDoc.data();
-                        if (forum.members && forum.members.length > 0) {
-                            forum.members.forEach(memberId => {
-                                if (memberId !== username) {
-                                    sendPushNotification(
-                                        memberId,
-                                        'New Forum Message',
-                                        `New message in ${forum.name}`,
-                                        {
-                                            chatId: currentForumId,
-                                            type: 'forum_message'
-                                        }
-                                    );
-                                }
-                            });
-                        }
-                    }
-                });
         }
         
         savePromise.then(() => {
@@ -5204,5 +5004,6 @@ document.addEventListener('DOMContentLoaded', function() {
     globalBackButton.style.display = 'none';
 });
 </script>
+   
 </body>
 </html>

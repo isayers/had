@@ -2639,14 +2639,14 @@ html, body {
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
-  <script> 
+  <script>
    // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDQfo8qILskxClJy52_19tFdx6xMsiQD2M",
     authDomain: "dnata-e2569.firebaseapp.com",
     databaseURL: "https://dnata-e2569-default-rtdb.firebaseio.com",
     projectId: "dnata-e2569",
-    storageBucket: "dnata-e2569.firebasestorage.app",
+    storageBucket: "dnata-e2569.appspot.com",
     messagingSenderId: "693382423789",
     appId: "1:693382423789:web:8aa14672c6ef34ee59d8e4",
     measurementId: "G-B6F7CHPM2Y"
@@ -2804,6 +2804,123 @@ window.customPrompt = async (message, defaultValue = '', options = {}) => {
     
     return result.confirmed ? result.value : null;
 };
+
+// OneSignal initialization and notification handling
+function initializeOneSignal() {
+    // Check if OneSignal is already initialized
+    if (window.OneSignal) {
+        console.log('OneSignal already initialized');
+        return;
+    }
+
+    // Initialize OneSignal
+    window.OneSignal = window.OneSignal || [];
+    OneSignal.push(function() {
+        OneSignal.init({
+            appId: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
+            safari_web_id: "web.onesignal.auto.9e5b4b1a-1a1b-4b1a-9e5b-4b1a1a1b4b1a",
+            notifyButton: {
+                enable: false
+            },
+            autoResubscribe: true,
+            promptOptions: {
+                /* Customize the prompt options if needed */
+            }
+        });
+
+        // Get the current user's OneSignal player ID
+        OneSignal.getUserId().then(function(userId) {
+            if (userId) {
+                console.log('OneSignal User ID:', userId);
+                
+                // Save the player ID to the employee's document in Firestore
+                const user = auth.currentUser;
+                if (user) {
+                    const username = user.email.split('@')[0];
+                    db.collection('employees').doc(username).update({
+                        playerId: userId,
+                        notificationEnabled: true
+                    }).catch(error => {
+                        console.error('Error saving player ID:', error);
+                    });
+                }
+            } else {
+                console.log('OneSignal not registered yet');
+            }
+        });
+
+        // Handle notification permission changes
+        OneSignal.on('notificationPermissionChange', function(permissionChange) {
+            console.log('Notification permission changed:', permissionChange);
+            
+            const user = auth.currentUser;
+            if (user) {
+                const username = user.email.split('@')[0];
+                db.collection('employees').doc(username).update({
+                    notificationEnabled: permissionChange.to === 'granted'
+                }).catch(error => {
+                    console.error('Error updating notification permission:', error);
+                });
+            }
+        });
+
+        // Handle notification clicks
+        OneSignal.on('notificationClick', function(event) {
+            console.log('Notification clicked:', event);
+            
+            // Handle different notification types
+            if (event.data && event.data.type === 'break_schedule_update') {
+                // Open the teams tab when a break schedule notification is clicked
+                document.getElementById('dashboardTeamsIcon').click();
+            }
+        });
+    });
+}
+
+// Send push notification to specific employee
+async function sendEmployeeNotification(employeeId, title, message, data = {}) {
+    try {
+        // Get the employee's player ID
+        const employeeDoc = await db.collection('employees').doc(employeeId).get();
+        if (!employeeDoc.exists) {
+            console.log('Employee not found');
+            return;
+        }
+
+        const employee = employeeDoc.data();
+        if (!employee.playerId) {
+            console.log('Employee has no player ID');
+            return;
+        }
+
+        // Prepare notification data
+        const notificationData = {
+            app_id: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
+            include_player_ids: [employee.playerId],
+            headings: { en: title },
+            contents: { en: message },
+            data: data
+        };
+
+        // Send notification via OneSignal API
+        const response = await fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic os_v2_app_r2mxxiqs2fgxxbxvmcgzx4ykkyoyqqjupcoerwvga7cpdam66tnoxcptb2cco4qo7ert4gyu4lak4ggsthudg5ny7wqjykhlg3re7oy'
+            },
+            body: JSON.stringify(notificationData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`OneSignal API error: ${response.status}`);
+        }
+
+        console.log('Push notification sent successfully');
+    } catch (error) {
+        console.error('Error sending push notification:', error);
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Fixed header elements
@@ -3764,6 +3881,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 activeBreakAlerts = activeBreakAlerts.filter(alert => alert !== breakAlert);
             }, 300);
         });
+        
+        // Also send push notification if user is not active
+        const user = auth.currentUser;
+        if (user) {
+            const username = user.email.split('@')[0];
+            
+            // Only send push notification if the app is in background/closed
+            if (document.visibilityState !== 'visible') {
+                sendEmployeeNotification(username, title, message, {
+                    type: 'break_alert',
+                    alert_type: type
+                });
+            }
+        }
     }
 
     // Close all break alerts of a specific type
@@ -4811,6 +4942,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     section.classList.add('visible');
                 }, index * 150);
             });
+            
+            // Initialize OneSignal after showing dashboard
+            initializeOneSignal();
         }, 400);
     }
 
@@ -4831,6 +4965,13 @@ document.addEventListener('DOMContentLoaded', function() {
             alert.remove();
         });
         activeBreakAlerts = [];
+        
+        // Clear OneSignal state on logout
+        if (window.OneSignal) {
+            OneSignal.push(function() {
+                OneSignal.setSubscription(false);
+            });
+        }
         
         // Animate dashboard out
         dashboardContainer.classList.remove('active');
@@ -5032,6 +5173,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initially hide the fixed header
     fixedHeader.style.display = 'none';
     globalBackButton.style.display = 'none';
+    
+    // Initialize OneSignal when page loads (will be properly initialized after login)
+    initializeOneSignal();
+    
+    // Handle page visibility changes to prevent duplicate notifications
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            // Page is active, no need for push notifications
+            console.log('App is now visible');
+        }
+    });
 });
 // Attachment button functionality
 const attachmentBtn = document.getElementById('attachmentBtn');

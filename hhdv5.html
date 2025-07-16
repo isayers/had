@@ -1632,14 +1632,57 @@ html, body {
             font-size: 1.2rem;
         }
 
-        /* New floating action menu styles */
+        /* Chat action buttons container */
         .chat-actions {
             position: relative;
             display: flex;
             gap: 5px;
         }
 
+        /* Main attachment button */
         .chat-action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            z-index: 1;
+        }
+
+        .chat-action-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .chat-action-btn i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        /* Expanded action buttons */
+        .expanded-actions {
+            position: absolute;
+            bottom: 50px;
+            left: 0;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--white);
+            padding: 10px;
+            border-radius: 20px;
+            box-shadow: var(--neumorphic-shadow);
+            z-index: 2;
+        }
+
+        .expanded-actions.active {
+            display: flex;
+        }
+
+        .expanded-action-btn {
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -1652,63 +1695,12 @@ html, body {
             border: none;
         }
 
-        .chat-action-btn:hover {
-            background: #e0e0e0;
-        }
-
-        .chat-action-btn i {
-            color: var(--primary);
-            font-size: 1.1rem;
-        }
-
-        .action-menu {
-            position: absolute;
-            bottom: 50px;
-            left: 0;
-            background: var(--white);
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            padding: 10px;
-            display: none;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 10;
-        }
-
-        .action-menu.active {
-            display: flex;
-            animation: fadeInUp 0.3s ease;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .action-menu-item {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--light);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .action-menu-item:hover {
+        .expanded-action-btn:hover {
             background: #e0e0e0;
             transform: translateY(-2px);
         }
 
-        .action-menu-item i {
+        .expanded-action-btn i {
             color: var(--primary);
             font-size: 1.1rem;
         }
@@ -2480,18 +2472,18 @@ html, body {
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-container">
             <div class="chat-actions">
-                <button class="chat-action-btn" id="actionMenuBtn">
-                    <i class="fas fa-plus"></i>
+                <button class="chat-action-btn" id="attachmentBtn">
+                    <i class="fas fa-paperclip"></i>
+                    <input type="file" id="fileUploadInput" style="display: none;">
                 </button>
-                <div class="action-menu" id="actionMenu">
-                    <button class="action-menu-item" id="fileUploadBtn">
+                <div class="expanded-actions" id="expandedActions">
+                    <button class="expanded-action-btn" id="fileUploadBtn">
                         <i class="fas fa-paperclip"></i>
-                        <input type="file" id="fileUploadInput" style="display: none;">
                     </button>
-                    <button class="action-menu-item" id="cameraUploadBtn">
+                    <button class="expanded-action-btn" id="cameraUploadBtn">
                         <i class="fas fa-camera"></i>
                     </button>
-                    <button class="action-menu-item" id="voiceRecordBtn">
+                    <button class="expanded-action-btn" id="voiceRecordBtn">
                         <i class="fas fa-microphone"></i>
                     </button>
                 </div>
@@ -2610,91 +2602,6 @@ html, body {
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
   <script> 
-  // DOM Elements for the action menu
-const actionMenuBtn = document.getElementById('actionMenuBtn');
-const actionMenu = document.getElementById('actionMenu');
-const fileUploadBtn = document.getElementById('fileUploadBtn');
-const fileUploadInput = document.getElementById('fileUploadInput');
-const cameraUploadBtn = document.getElementById('cameraUploadBtn');
-const voiceRecordBtn = document.getElementById('voiceRecordBtn');
-
-// Toggle action menu
-function toggleActionMenu() {
-    actionMenu.classList.toggle('active');
-}
-
-// Handle file upload
-function handleFileUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Create new message with file
-    const newMessage = {
-        id: 'M' + Date.now(),
-        sender: currentUser.name,
-        senderId: currentUser.id,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        fileName: file.name,
-        fileSize: formatFileSize(file.size),
-        type: 'file',
-        sent: true
-    };
-    
-    // Add to messages array
-    sampleChatMessages.push(newMessage);
-    
-    // Reload messages
-    loadChatMessages();
-    
-    // Close action menu
-    actionMenu.classList.remove('active');
-}
-
-// Start camera
-function startCamera() {
-    actionMenu.classList.remove('active');
-    
-    navigator.mediaDevices.getUserMedia({ 
-        video: { 
-            facingMode: facingMode,
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-        }, 
-        audio: false 
-    }).then(stream => {
-        currentStream = stream;
-        cameraVideo.srcObject = stream;
-        cameraModal.classList.add('active');
-    }).catch(err => {
-        console.error("Camera error: ", err);
-        alert('Could not access the camera. Please make sure you have granted camera permissions.');
-    });
-}
-
-// Toggle voice recording
-function toggleRecording() {
-    actionMenu.classList.remove('active');
-    
-    if (!mediaRecorder) {
-        startRecording();
-    } else {
-        stopRecording();
-    }
-}
-
-// Event listeners for the action menu
-actionMenuBtn.addEventListener('click', toggleActionMenu);
-fileUploadBtn.addEventListener('click', () => fileUploadInput.click());
-fileUploadInput.addEventListener('change', handleFileUpload);
-cameraUploadBtn.addEventListener('click', startCamera);
-voiceRecordBtn.addEventListener('click', toggleRecording);
-
-// Close menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!actionMenu.contains(e.target) && e.target !== actionMenuBtn) {
-        actionMenu.classList.remove('active');
-    }
-});
    // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDQfo8qILskxClJy52_19tFdx6xMsiQD2M",
@@ -5088,7 +4995,132 @@ document.addEventListener('DOMContentLoaded', function() {
     fixedHeader.style.display = 'none';
     globalBackButton.style.display = 'none';
 });
+// Attachment button functionality
+const attachmentBtn = document.getElementById('attachmentBtn');
+const expandedActions = document.getElementById('expandedActions');
 
+attachmentBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    expandedActions.classList.toggle('active');
+});
+
+// Close expanded actions when clicking outside
+document.addEventListener('click', function() {
+    expandedActions.classList.remove('active');
+});
+
+// Prevent expanded actions from closing when clicking inside
+expandedActions.addEventListener('click', function(e) {
+    e.stopPropagation();
+});
+
+// File upload button
+document.getElementById('fileUploadBtn').addEventListener('click', function() {
+    document.getElementById('fileUploadInput').click();
+    expandedActions.classList.remove('active');
+});
+
+// Camera upload button
+document.getElementById('cameraUploadBtn').addEventListener('click', function() {
+    startCamera();
+    expandedActions.classList.remove('active');
+});
+
+// Voice record button
+const voiceRecordBtn = document.getElementById('voiceRecordBtn');
+const recordingIndicator = document.getElementById('recordingIndicator');
+
+voiceRecordBtn.addEventListener('click', function() {
+    if (recordingIndicator.style.display === 'flex') {
+        // Stop recording
+        recordingIndicator.style.display = 'none';
+        voiceRecordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        
+        // Here you would stop the actual recording
+        // For demo, we'll just show a sent message
+        setTimeout(() => {
+            addMessage('You', 'Voice message', true, 'audio');
+        }, 500);
+    } else {
+        // Start recording
+        recordingIndicator.style.display = 'flex';
+        voiceRecordBtn.innerHTML = '<i class="fas fa-stop"></i>';
+        
+        // Here you would start the actual recording
+    }
+    expandedActions.classList.remove('active');
+});
+
+// File upload handler
+document.getElementById('fileUploadInput').addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const fileName = file.name;
+        const fileType = file.type.split('/')[0]; // 'image', 'video', 'audio', etc.
+        
+        // For demo, we'll just show the file name
+        addMessage('You', fileName, true, fileType);
+    }
+});
+
+// Camera functionality
+let stream = null;
+
+function startCamera() {
+    document.getElementById('cameraModal').classList.add('active');
+    
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(function(s) {
+            stream = s;
+            const video = document.getElementById('cameraVideo');
+            video.srcObject = stream;
+        })
+        .catch(function(err) {
+            console.error("Error accessing camera: ", err);
+        });
+}
+
+// Camera capture button
+document.getElementById('cameraCaptureBtn').addEventListener('click', function() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Stop camera stream
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+    
+    // Show preview
+    document.getElementById('cameraModal').classList.remove('active');
+    document.getElementById('cameraPreviewImg').src = canvas.toDataURL('image/png');
+    document.getElementById('cameraPreview').classList.add('active');
+});
+
+// Camera close button
+document.getElementById('cameraCloseBtn').addEventListener('click', function() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+    document.getElementById('cameraModal').classList.remove('active');
+});
+
+// Camera preview retake button
+document.getElementById('cameraPreviewRetake').addEventListener('click', function() {
+    document.getElementById('cameraPreview').classList.remove('active');
+    startCamera();
+});
+
+// Camera preview accept button
+document.getElementById('cameraPreviewAccept').addEventListener('click', function() {
+    document.getElementById('cameraPreview').classList.remove('active');
+    
+    // For demo, we'll just show the image in chat
+    addMessage('You', 'Photo', true, 'image');
+});
 </script>
    
 </body>

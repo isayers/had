@@ -360,9 +360,6 @@ html, body {
             --bg-gradient: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%);
             --text-color: #2c3e50;
             --card-bg: #ffffff;
-            --glass-effect: rgba(255, 255, 255, 0.15);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
         }
 
         /* Dark Mode Variables */
@@ -379,9 +376,6 @@ html, body {
             --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             --text-color: #f5f6fa;
             --card-bg: #1e272e;
-            --glass-effect: rgba(30, 39, 46, 0.5);
-            --glass-border: rgba(255, 255, 255, 0.05);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
         * {
@@ -442,7 +436,7 @@ html, body {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: var(--glass-effect);
+            background: var(--glass-bg);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
@@ -450,14 +444,13 @@ html, body {
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            box-shadow: var(--glass-shadow);
+            box-shadow: var(--neumorphic-shadow);
             z-index: 95;
             transition: all 0.3s ease;
         }
 
         .theme-switcher:hover {
             transform: translateY(-3px) scale(1.1);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
         .theme-switcher i {
@@ -695,12 +688,12 @@ html, body {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--glass-effect);
+            background: var(--glass-bg);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--glass-border);
             z-index: 100;
-            box-shadow: var(--glass-shadow);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             transform: translateY(-100%);
             transition: all 0.3s ease;
         }
@@ -741,21 +734,21 @@ html, body {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: var(--glass-effect);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            box-shadow: var(--glass-shadow);
+            box-shadow: var(--neumorphic-shadow);
             transition: all 0.3s ease;
         }
 
         .header-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            background: var(--primary-light);
         }
 
         .header-btn i {
@@ -885,19 +878,20 @@ html, body {
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--glass-effect);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            width: 90%;
+            max-width: 400px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            padding: 10px;
-            border-radius: 50px;
+            border-radius: 25px;
+            padding: 10px 15px;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            box-shadow: var(--glass-shadow);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             z-index: 90;
             transition: all 0.3s ease;
-            max-width: 90%;
         }
 
         #dashboardIconsContainer.hidden {
@@ -911,13 +905,13 @@ html, body {
             cursor: pointer;
             position: relative;
             transition: all 0.3s ease;
-            padding: 10px 15px;
-            border-radius: 50px;
-            margin: 0 5px;
+            padding: 10px;
+            border-radius: 15px;
+            background: transparent;
         }
 
         .dashboard-icon.active {
-            background: rgba(52, 152, 219, 0.2);
+            background: rgba(52, 152, 219, 0.1);
         }
 
         .dashboard-icon i {
@@ -925,11 +919,23 @@ html, body {
             color: var(--primary);
             margin-bottom: 5px;
             transition: all 0.3s ease;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: var(--neumorphic-shadow);
+            border: 1px solid var(--glass-border);
         }
 
         .dashboard-icon.active i {
-            color: var(--primary-dark);
-            transform: scale(1.1);
+            color: var(--white);
+            background: var(--primary);
+            transform: translateY(-10px) scale(1.1);
         }
 
         .dashboard-icon-text {
@@ -937,11 +943,19 @@ html, body {
             font-weight: 600;
             color: var(--primary);
             transition: all 0.3s ease;
+            opacity: 0;
+            position: absolute;
+            bottom: -20px;
+            background: var(--primary);
+            color: var(--white);
+            padding: 3px 8px;
+            border-radius: 10px;
+            white-space: nowrap;
         }
 
         .dashboard-icon.active .dashboard-icon-text {
-            color: var(--primary-dark);
-            font-weight: 700;
+            opacity: 1;
+            bottom: -25px;
         }
 
         .dashboard-icon-tooltip {
@@ -1376,7 +1390,7 @@ html, body {
 
         .chat-header {
             padding: 15px 20px;
-            background: var(--glass-effect);
+            background: var(--glass-bg);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--glass-border);
@@ -1389,15 +1403,15 @@ html, body {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: var(--glass-effect);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            box-shadow: var(--glass-shadow);
+            box-shadow: var(--neumorphic-shadow);
             transition: all 0.3s ease;
         }
 

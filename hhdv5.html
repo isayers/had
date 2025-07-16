@@ -2610,6 +2610,91 @@ html, body {
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
   <script> 
+  // DOM Elements for the action menu
+const actionMenuBtn = document.getElementById('actionMenuBtn');
+const actionMenu = document.getElementById('actionMenu');
+const fileUploadBtn = document.getElementById('fileUploadBtn');
+const fileUploadInput = document.getElementById('fileUploadInput');
+const cameraUploadBtn = document.getElementById('cameraUploadBtn');
+const voiceRecordBtn = document.getElementById('voiceRecordBtn');
+
+// Toggle action menu
+function toggleActionMenu() {
+    actionMenu.classList.toggle('active');
+}
+
+// Handle file upload
+function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Create new message with file
+    const newMessage = {
+        id: 'M' + Date.now(),
+        sender: currentUser.name,
+        senderId: currentUser.id,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        fileName: file.name,
+        fileSize: formatFileSize(file.size),
+        type: 'file',
+        sent: true
+    };
+    
+    // Add to messages array
+    sampleChatMessages.push(newMessage);
+    
+    // Reload messages
+    loadChatMessages();
+    
+    // Close action menu
+    actionMenu.classList.remove('active');
+}
+
+// Start camera
+function startCamera() {
+    actionMenu.classList.remove('active');
+    
+    navigator.mediaDevices.getUserMedia({ 
+        video: { 
+            facingMode: facingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        }, 
+        audio: false 
+    }).then(stream => {
+        currentStream = stream;
+        cameraVideo.srcObject = stream;
+        cameraModal.classList.add('active');
+    }).catch(err => {
+        console.error("Camera error: ", err);
+        alert('Could not access the camera. Please make sure you have granted camera permissions.');
+    });
+}
+
+// Toggle voice recording
+function toggleRecording() {
+    actionMenu.classList.remove('active');
+    
+    if (!mediaRecorder) {
+        startRecording();
+    } else {
+        stopRecording();
+    }
+}
+
+// Event listeners for the action menu
+actionMenuBtn.addEventListener('click', toggleActionMenu);
+fileUploadBtn.addEventListener('click', () => fileUploadInput.click());
+fileUploadInput.addEventListener('change', handleFileUpload);
+cameraUploadBtn.addEventListener('click', startCamera);
+voiceRecordBtn.addEventListener('click', toggleRecording);
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+    if (!actionMenu.contains(e.target) && e.target !== actionMenuBtn) {
+        actionMenu.classList.remove('active');
+    }
+});
    // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDQfo8qILskxClJy52_19tFdx6xMsiQD2M",
@@ -5003,6 +5088,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fixedHeader.style.display = 'none';
     globalBackButton.style.display = 'none';
 });
+
 </script>
    
 </body>

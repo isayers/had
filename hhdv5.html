@@ -3079,7 +3079,7 @@ function showNotificationBadge(iconId, count) {
         // Create badge element
         const badge = document.createElement('div');
         badge.className = 'notification-badge';
-        badge.textContent = count > 9 ? '9+' : count;
+        badge.textContent = count > 9 ? '9+' : count.toString();
         icon.appendChild(badge);
 
         // Play notification sound
@@ -3099,6 +3099,17 @@ function showNotificationBadge(iconId, count) {
             console.log('Vibration error:', e);
         }
     }
+}
+
+// Update announcement badge
+function updateAnnouncementBadge() {
+    showNotificationBadge('dashboardHomeIcon', unreadAnnouncements);
+}
+
+// Update message badges
+function updateMessageBadges() {
+    const totalUnread = Object.values(unreadMessages).reduce((sum, count) => sum + count, 0);
+    showNotificationBadge('dashboardForumsIcon', totalUnread);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -3614,17 +3625,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                 }
             });
-    }
-
-    // Update announcement badge
-    function updateAnnouncementBadge() {
-        showNotificationBadge('dashboardHomeIcon', unreadAnnouncements);
-    }
-
-    // Update message badges
-    function updateMessageBadges() {
-        const totalUnread = Object.values(unreadMessages).reduce((sum, count) => sum + count, 0);
-        showNotificationBadge('dashboardForumsIcon', totalUnread);
     }
 
     // Load employee's teams for dashboard
@@ -5686,8 +5686,7 @@ document.getElementById('cameraPreviewAccept').addEventListener('click', functio
     
     // For demo, we'll just show the image in chat
     addMessage('You', 'Photo', true, 'image');
-});
-</script>
+});</script>
    
 </body>
 </html>

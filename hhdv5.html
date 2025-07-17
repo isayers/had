@@ -2682,6 +2682,12 @@ let alertedBreaks = new Set();
 let teams = []; // Initialize teams array globally
 let activeBreakAlerts = []; // Track active break alerts
 
+// Notification badges
+let unreadMessagesCount = 0;
+let unreadAnnouncementsCount = 0;
+let lastAnnouncementTimestamp = null;
+let lastMessageCheckTime = null;
+
 // Theme switcher functionality
 const themeSwitcher = document.getElementById('themeSwitcher');
 const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
@@ -3032,9 +3038,44 @@ async function sendBulkNotifications(employeeIds, title, message, data = {}) {
     }
 }
 
-// [Rest of your existing code remains exactly the same...]
-// All the remaining functions and event listeners from your original code should be kept as-is
-// The only changes needed are in the OneSignal initialization and notification sending functions above
+// Update notification badges
+function updateNotificationBadges() {
+    // Update messages badge
+    const messagesBadge = document.getElementById('messagesBadge');
+    if (unreadMessagesCount > 0) {
+        messagesBadge.textContent = unreadMessagesCount > 99 ? '99+' : unreadMessagesCount;
+        messagesBadge.style.display = 'flex';
+    } else {
+        messagesBadge.style.display = 'none';
+    }
+
+    // Update announcements badge
+    const announcementsBadge = document.getElementById('announcementsBadge');
+    if (unreadAnnouncementsCount > 0) {
+        announcementsBadge.textContent = unreadAnnouncementsCount > 99 ? '99+' : unreadAnnouncementsCount;
+        announcementsBadge.style.display = 'flex';
+    } else {
+        announcementsBadge.style.display = 'none';
+    }
+}
+
+// Play notification sound and vibrate
+function playNotificationAlert() {
+    try {
+        const audio = new Audio('notification.mp3');
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    } catch (e) {
+        console.log('Audio error:', e);
+    }
+
+    try {
+        if ('vibrate' in navigator) {
+            navigator.vibrate([200, 100, 200]);
+        }
+    } catch (e) {
+        console.log('Vibration error:', e);
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Fixed header elements
@@ -5175,6 +5216,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Load employee's teams and announcements
                         loadEmployeeTeams(email);
                         loadAnnouncements();
+                        
+                        // Start checking for new messages
+                        checkForNewMessages(email);
                     }
                 });
                 
@@ -5199,6 +5243,75 @@ document.addEventListener('DOMContentLoaded', function() {
             // Initialize OneSignal after showing dashboard
             initializeOneSignal();
         }, 400);
+    }
+
+    // Check for new messages
+    function checkForNewMessages(username) {
+        // Check private messages
+        db.collection('privateChats')
+            .where('participants', 'array-contains', username)
+            .get()
+            .then(snapshot => {
+                snapshot.forEach(doc => {
+                    const chatId = doc.id;
+                    const lastMessageQuery = db.collection('privateChats').doc(chatId)
+                        .collection('messages')
+                        .orderBy('timestamp', 'desc')
+                        .limit(1);
+                    
+                    lastMessageQuery.onSnapshot(messageSnapshot => {
+                        if (!messageSnapshot.empty) {
+                            const message = messageSnapshot.docs[0].data();
+                            const messageTime = message.timestamp?.toDate() || new Date();
+                            
+                            if (!lastMessageCheckTime || messageTime > lastMessageCheckTime) {
+                                if (message.sender !== username) {
+                                    unreadMessagesCount++;
+                                    updateNotificationBadges();
+                                    playNotificationAlert();
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+        
+        // Check forum messages
+        db.collection('chatForums')
+            .where('members', 'array-contains', username)
+            .get()
+            .then(snapshot => {
+                snapshot.forEach(doc => {
+                    const forumId = doc.id;
+                    const lastMessageQuery = db.collection('chatForums').doc(forumId)
+                        .collection('messages')
+                        .orderBy('timestamp', 'desc')
+                        .limit(1);
+                    
+                    lastMessageQuery.onSnapshot(messageSnapshot => {
+                        if (!messageSnapshot.empty) {
+                            const message = messageSnapshot.docs[0].data();
+                            const messageTime = message.timestamp?.toDate() || new Date();
+                            
+                            if (!lastMessageCheckTime || messageTime > lastMessageCheckTime) {
+                                if (message.sender !== username) {
+                                    unreadMessagesCount++;
+                                    updateNotificationBadges();
+                                    playNotificationAlert();
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+        
+        // Update last check time
+        lastMessageCheckTime = new Date();
+        
+        // Check every 5 minutes
+        setInterval(() => {
+            checkForNewMessages(username);
+        }, 300000);
     }
 
     // Logout functionality
@@ -5250,6 +5363,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     unsubscribeMessages();
                     unsubscribeMessages = null;
                 }
+                
+                // Reset notification badges
+                unreadMessagesCount = 0;
+                unreadAnnouncementsCount = 0;
+                updateNotificationBadges();
                 
                 // Animate login container back in
                 setTimeout(() => {
@@ -5353,41 +5471,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert('Error sending password reset email. Please try again.');
                 }
             });
-    });
-
-    // Tooltip functionality for floating icons
-    const floatingIcons = document.querySelectorAll('.floating-icon');
-    floatingIcons.forEach(icon => {
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.textContent = icon.getAttribute('data-tooltip');
-        icon.appendChild(tooltip);
-        
-        icon.addEventListener('mouseenter', function() {
-            tooltip.style.visibility = 'visible';
-            tooltip.style.opacity = '1';
-        });
-        
-        icon.addEventListener('mouseleave', function() {
-            tooltip.style.visibility = 'hidden';
-            tooltip.style.opacity = '0';
-        });
-    });
-
-    // Tooltip functionality for dashboard icons
-    const dashboardIcons = document.querySelectorAll('.dashboard-icon');
-    dashboardIcons.forEach(icon => {
-        const tooltip = icon.querySelector('.dashboard-icon-tooltip');
-        
-        icon.addEventListener('mouseenter', function() {
-            tooltip.style.visibility = 'visible';
-            tooltip.style.opacity = '1';
-        });
-        
-        icon.addEventListener('mouseleave', function() {
-            tooltip.style.visibility = 'hidden';
-            tooltip.style.opacity = '0';
-        });
     });
 
     // Check if user is already logged in

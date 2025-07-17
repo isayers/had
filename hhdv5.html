@@ -2681,12 +2681,8 @@ let breakCheckInterval = null;
 let alertedBreaks = new Set();
 let teams = []; // Initialize teams array globally
 let activeBreakAlerts = []; // Track active break alerts
-
-// Notification badges
-let unreadMessagesCount = 0;
-let unreadAnnouncementsCount = 0;
-let lastAnnouncementTimestamp = null;
-let lastMessageCheckTime = null;
+let unreadMessages = {}; // Track unread messages per chat
+let unreadAnnouncements = 0; // Track unread announcements
 
 // Theme switcher functionality
 const themeSwitcher = document.getElementById('themeSwitcher');
@@ -3038,42 +3034,40 @@ async function sendBulkNotifications(employeeIds, title, message, data = {}) {
     }
 }
 
-// Update notification badges
-function updateNotificationBadges() {
-    // Update messages badge
-    const messagesBadge = document.getElementById('messagesBadge');
-    if (unreadMessagesCount > 0) {
-        messagesBadge.textContent = unreadMessagesCount > 99 ? '99+' : unreadMessagesCount;
-        messagesBadge.style.display = 'flex';
-    } else {
-        messagesBadge.style.display = 'none';
+// Show notification badge with sound and vibration
+function showNotificationBadge(iconId, count) {
+    const icon = document.getElementById(iconId);
+    if (!icon) return;
+
+    // Remove existing badge if any
+    const existingBadge = icon.querySelector('.notification-badge');
+    if (existingBadge) {
+        existingBadge.remove();
     }
 
-    // Update announcements badge
-    const announcementsBadge = document.getElementById('announcementsBadge');
-    if (unreadAnnouncementsCount > 0) {
-        announcementsBadge.textContent = unreadAnnouncementsCount > 99 ? '99+' : unreadAnnouncementsCount;
-        announcementsBadge.style.display = 'flex';
-    } else {
-        announcementsBadge.style.display = 'none';
-    }
-}
+    if (count > 0) {
+        // Create badge element
+        const badge = document.createElement('div');
+        badge.className = 'notification-badge';
+        badge.textContent = count > 9 ? '9+' : count;
+        icon.appendChild(badge);
 
-// Play notification sound and vibrate
-function playNotificationAlert() {
-    try {
-        const audio = new Audio('notification.mp3');
-        audio.play().catch(e => console.log('Audio play failed:', e));
-    } catch (e) {
-        console.log('Audio error:', e);
-    }
-
-    try {
-        if ('vibrate' in navigator) {
-            navigator.vibrate([200, 100, 200]);
+        // Play notification sound
+        try {
+            const audio = new Audio('notification.mp3');
+            audio.play().catch(e => console.log('Audio play failed:', e));
+        } catch (e) {
+            console.log('Audio error:', e);
         }
-    } catch (e) {
-        console.log('Vibration error:', e);
+
+        // Vibrate device if supported
+        try {
+            if ('vibrate' in navigator) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        } catch (e) {
+            console.log('Vibration error:', e);
+        }
     }
 }
 
@@ -3432,6 +3426,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Load messages for this private chat
                     loadPrivateMessages(chatId);
+                    
+                    // Reset unread count for this chat
+                    unreadMessages[chatId] = 0;
+                    updateMessageBadges();
                 }
             });
     }
@@ -3546,11 +3544,57 @@ document.addEventListener('DOMContentLoaded', function() {
                         announcementItem.classList.add('visible');
                     }, index * 150);
                 });
+                
+                // Check for new announcements
+                checkNewAnnouncements();
             })
             .catch(error => {
                 console.error('Error loading announcements:', error);
                 announcementsBody.innerHTML = '<div class="no-announcements">Error loading announcements. Please try again later.</div>';
             });
+    }
+
+    // Check for new announcements
+    function checkNewAnnouncements() {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const username = user.email.split('@')[0];
+        
+        db.collection('employees').doc(username).get()
+            .then(doc => {
+                if (doc.exists) {
+                    const employee = doc.data();
+                    const lastChecked = employee.lastAnnouncementCheck || new Date(0);
+                    
+                    // Count announcements newer than last check
+                    db.collection('announcements')
+                        .where('date', '>', lastChecked)
+                        .get()
+                        .then(snapshot => {
+                            unreadAnnouncements = snapshot.size;
+                            updateAnnouncementBadge();
+                            
+                            // Update last check time
+                            if (unreadAnnouncements > 0) {
+                                db.collection('employees').doc(username).update({
+                                    lastAnnouncementCheck: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                        });
+                }
+            });
+    }
+
+    // Update announcement badge
+    function updateAnnouncementBadge() {
+        showNotificationBadge('dashboardHomeIcon', unreadAnnouncements);
+    }
+
+    // Update message badges
+    function updateMessageBadges() {
+        const totalUnread = Object.values(unreadMessages).reduce((sum, count) => sum + count, 0);
+        showNotificationBadge('dashboardForumsIcon', totalUnread);
     }
 
     // Load employee's teams for dashboard
@@ -4628,6 +4672,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Load messages
         loadForumMessages(forumId);
+        
+        // Reset unread count for this forum
+        unreadMessages[forumId] = 0;
+        updateMessageBadges();
     }
 
     // Load forum messages
@@ -5217,8 +5265,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         loadEmployeeTeams(email);
                         loadAnnouncements();
                         
-                        // Start checking for new messages
-                        checkForNewMessages(email);
+                        // Set up listeners for new messages
+                        setupMessageListeners(email);
                     }
                 });
                 
@@ -5245,73 +5293,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 400);
     }
 
-    // Check for new messages
-    function checkForNewMessages(username) {
-        // Check private messages
+    // Set up listeners for new messages
+    function setupMessageListeners(username) {
+        // Listen for new private messages
         db.collection('privateChats')
             .where('participants', 'array-contains', username)
-            .get()
-            .then(snapshot => {
-                snapshot.forEach(doc => {
-                    const chatId = doc.id;
-                    const lastMessageQuery = db.collection('privateChats').doc(chatId)
-                        .collection('messages')
-                        .orderBy('timestamp', 'desc')
-                        .limit(1);
-                    
-                    lastMessageQuery.onSnapshot(messageSnapshot => {
-                        if (!messageSnapshot.empty) {
-                            const message = messageSnapshot.docs[0].data();
-                            const messageTime = message.timestamp?.toDate() || new Date();
-                            
-                            if (!lastMessageCheckTime || messageTime > lastMessageCheckTime) {
-                                if (message.sender !== username) {
-                                    unreadMessagesCount++;
-                                    updateNotificationBadges();
-                                    playNotificationAlert();
-                                }
-                            }
+            .onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'modified') {
+                        const chatId = change.doc.id;
+                        if (chatId !== currentForumId) {
+                            // Increment unread count for this chat
+                            unreadMessages[chatId] = (unreadMessages[chatId] || 0) + 1;
+                            updateMessageBadges();
                         }
-                    });
+                    }
                 });
             });
         
-        // Check forum messages
+        // Listen for new forum messages in joined forums
         db.collection('chatForums')
             .where('members', 'array-contains', username)
-            .get()
-            .then(snapshot => {
-                snapshot.forEach(doc => {
-                    const forumId = doc.id;
-                    const lastMessageQuery = db.collection('chatForums').doc(forumId)
-                        .collection('messages')
-                        .orderBy('timestamp', 'desc')
-                        .limit(1);
-                    
-                    lastMessageQuery.onSnapshot(messageSnapshot => {
-                        if (!messageSnapshot.empty) {
-                            const message = messageSnapshot.docs[0].data();
-                            const messageTime = message.timestamp?.toDate() || new Date();
-                            
-                            if (!lastMessageCheckTime || messageTime > lastMessageCheckTime) {
-                                if (message.sender !== username) {
-                                    unreadMessagesCount++;
-                                    updateNotificationBadges();
-                                    playNotificationAlert();
-                                }
-                            }
+            .onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'modified') {
+                        const forumId = change.doc.id;
+                        if (forumId !== currentForumId) {
+                            // Increment unread count for this forum
+                            unreadMessages[forumId] = (unreadMessages[forumId] || 0) + 1;
+                            updateMessageBadges();
                         }
-                    });
+                    }
                 });
             });
-        
-        // Update last check time
-        lastMessageCheckTime = new Date();
-        
-        // Check every 5 minutes
-        setInterval(() => {
-            checkForNewMessages(username);
-        }, 300000);
     }
 
     // Logout functionality
@@ -5363,11 +5377,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     unsubscribeMessages();
                     unsubscribeMessages = null;
                 }
-                
-                // Reset notification badges
-                unreadMessagesCount = 0;
-                unreadAnnouncementsCount = 0;
-                updateNotificationBadges();
                 
                 // Animate login container back in
                 setTimeout(() => {

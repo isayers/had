@@ -5574,7 +5574,19 @@ Notification.requestPermission().then(permission => {
     });
   }
 });
-     Android.showToast("Hello! Welcome to the app!");
+     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+<script>
+    window.onload = () => {
+        Toastify({
+            text: "Hello from WebView!",
+            duration: 3000,
+            gravity: "top",
+            position: "center",
+        }).showToast();
+    };
+</script>
 </script>
    
 </body>

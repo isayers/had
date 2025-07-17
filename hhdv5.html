@@ -5,39 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DNATA Employee Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
- <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
- <style>
-    /* Notification Badge Styles */
-.notification-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background-color: var(--danger);
-    color: var(--white);
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.7rem;
-    font-weight: bold;
-    animation: pulse 1.5s infinite;
-    border: 2px solid var(--white);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-/* Dashboard icon with badge */
-.dashboard-icon {
-    position: relative;
-    /* existing styles... */
-}
+    <style>
         /* Advanced Confirmation Dialogs */
 .confirmation-dialog {
     position: fixed;
@@ -468,10 +436,7 @@ html, body {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
+            background: var(--white);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -766,10 +731,7 @@ html, body {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
+            background: var(--white);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -780,7 +742,6 @@ html, body {
 
         .header-btn:hover {
             transform: translateY(-2px);
-            background: var(--primary-light);
         }
 
         .header-btn i {
@@ -907,27 +868,21 @@ html, body {
         /* Dashboard Icons */
         #dashboardIconsContainer {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 25px;
-            padding: 10px 15px;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--white);
+            padding: 15px 20px;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
             z-index: 90;
             transition: all 0.3s ease;
         }
 
         #dashboardIconsContainer.hidden {
-            transform: translateX(-50%) translateY(100%);
+            transform: translateY(100%);
         }
 
         .dashboard-icon {
@@ -939,7 +894,6 @@ html, body {
             transition: all 0.3s ease;
             padding: 10px;
             border-radius: 15px;
-            background: transparent;
         }
 
         .dashboard-icon.active {
@@ -951,23 +905,11 @@ html, body {
             color: var(--primary);
             margin-bottom: 5px;
             transition: all 0.3s ease;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            box-shadow: var(--neumorphic-shadow);
-            border: 1px solid var(--glass-border);
         }
 
         .dashboard-icon.active i {
-            color: var(--white);
-            background: var(--primary);
-            transform: translateY(-10px) scale(1.1);
+            color: var(--primary-dark);
+            transform: scale(1.1);
         }
 
         .dashboard-icon-text {
@@ -975,19 +917,11 @@ html, body {
             font-weight: 600;
             color: var(--primary);
             transition: all 0.3s ease;
-            opacity: 0;
-            position: absolute;
-            bottom: -20px;
-            background: var(--primary);
-            color: var(--white);
-            padding: 3px 8px;
-            border-radius: 10px;
-            white-space: nowrap;
         }
 
         .dashboard-icon.active .dashboard-icon-text {
-            opacity: 1;
-            bottom: -25px;
+            color: var(--primary-dark);
+            font-weight: 700;
         }
 
         .dashboard-icon-tooltip {
@@ -1435,10 +1369,7 @@ html, body {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
+            background: var(--white);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -2510,22 +2441,22 @@ html, body {
             <div id="dashboardHomeIcon" class="dashboard-icon">
                 <i class="fas fa-home"></i>
                 <span class="dashboard-icon-text">Home</span>
-               <!-- <div class="dashboard-icon-tooltip"></div> -->
+                <div class="dashboard-icon-tooltip">Dashboard Home</div>
             </div>
             <div id="dashboardTeamsIcon" class="dashboard-icon">
                 <i class="fas fa-users"></i>
                 <span class="dashboard-icon-text">Teams</span>
-               <!-- <div class="dashboard-icon-tooltip"></div> -->
+                <div class="dashboard-icon-tooltip">View Teams</div>
             </div>
             <div id="dashboardConnectIcon" class="dashboard-icon">
                 <i class="fas fa-user-friends"></i>
                 <span class="dashboard-icon-text">Connect</span>
-              <!--  <div class="dashboard-icon-tooltip"></div> -->
+                <div class="dashboard-icon-tooltip">Connect</div>
             </div>
             <div id="dashboardForumsIcon" class="dashboard-icon">
                 <i class="fas fa-comments"></i>
                 <span class="dashboard-icon-text">Forums</span>
-             <!--   <div class="dashboard-icon-tooltip"></div> -->
+                <div class="dashboard-icon-tooltip">Chat Forums</div>
             </div>
         </div>
     </div>
@@ -2670,13 +2601,23 @@ html, body {
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
- <script>// Firebase configuration
+  <script> 
+  // Request permission
+Notification.requestPermission().then(permission => {
+  if (permission === 'granted') {
+    new Notification('Hello!', {
+      body: 'This is a local notification',
+      icon: '/icon.png'
+    });
+  }
+});
+   // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDQfo8qILskxClJy52_19tFdx6xMsiQD2M",
     authDomain: "dnata-e2569.firebaseapp.com",
     databaseURL: "https://dnata-e2569-default-rtdb.firebaseio.com",
     projectId: "dnata-e2569",
-    storageBucket: "dnata-e2569.appspot.com",
+    storageBucket: "dnata-e2569.firebasestorage.app",
     messagingSenderId: "693382423789",
     appId: "1:693382423789:web:8aa14672c6ef34ee59d8e4",
     measurementId: "G-B6F7CHPM2Y"
@@ -2711,8 +2652,6 @@ let breakCheckInterval = null;
 let alertedBreaks = new Set();
 let teams = []; // Initialize teams array globally
 let activeBreakAlerts = []; // Track active break alerts
-let unreadMessages = {}; // Track unread messages per chat
-let unreadAnnouncements = 0; // Track unread announcements
 
 // Theme switcher functionality
 const themeSwitcher = document.getElementById('themeSwitcher');
@@ -2836,281 +2775,6 @@ window.customPrompt = async (message, defaultValue = '', options = {}) => {
     
     return result.confirmed ? result.value : null;
 };
-
-// Enhanced OneSignal initialization with Android support
-function initializeOneSignal() {
-    // Check if OneSignal is already initialized
-    if (window.OneSignal && window.OneSignal.isPushNotificationsSupported()) {
-        console.log('OneSignal already initialized');
-        return;
-    }
-
-    // Initialize OneSignal with Android configuration
-    window.OneSignal = window.OneSignal || [];
-    OneSignal.push(function() {
-        OneSignal.init({
-            appId: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
-            safari_web_id: "web.onesignal.auto.9e5b4b1a-1a1b-4b1a-9e5b-4b1a1a1b4b1a",
-            notifyButton: {
-                enable: false
-            },
-            autoResubscribe: true,
-            promptOptions: {
-                /* Customize the prompt options if needed */
-            },
-            // Android-specific configuration
-            android: {
-                googleProjectNumber: "693382423789" // Firebase Cloud Messaging sender ID
-            }
-        });
-
-        // Get the current user's OneSignal player ID
-        OneSignal.getUserId().then(function(userId) {
-            if (userId) {
-                console.log('OneSignal User ID:', userId);
-                
-                // Save the player ID to the employee's document in Firestore
-                const user = auth.currentUser;
-                if (user) {
-                    const username = user.email.split('@')[0];
-                    db.collection('employees').doc(username).update({
-                        playerId: userId,
-                        notificationEnabled: true,
-                        lastNotificationUpdate: firebase.firestore.FieldValue.serverTimestamp()
-                    }).catch(error => {
-                        console.error('Error saving player ID:', error);
-                    });
-                }
-            } else {
-                console.log('OneSignal not registered yet');
-            }
-        });
-
-        // Handle notification permission changes
-        OneSignal.on('notificationPermissionChange', function(permissionChange) {
-            console.log('Notification permission changed:', permissionChange);
-            
-            const user = auth.currentUser;
-            if (user) {
-                const username = user.email.split('@')[0];
-                db.collection('employees').doc(username).update({
-                    notificationEnabled: permissionChange.to === 'granted',
-                    lastNotificationUpdate: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(error => {
-                    console.error('Error updating notification permission:', error);
-                });
-            }
-        });
-
-        // Handle notification clicks
-        OneSignal.on('notificationClick', function(event) {
-            console.log('Notification clicked:', event);
-            
-            // Handle different notification types
-            if (event.data && event.data.type === 'break_schedule_update') {
-                // Open the teams tab when a break schedule notification is clicked
-                document.getElementById('dashboardTeamsIcon').click();
-            } else if (event.data && event.data.type === 'new_message') {
-                // Open the chat when a message notification is clicked
-                if (event.data.chatId) {
-                    if (event.data.isPrivate) {
-                        openPrivateChat(event.data.chatId, event.data.senderName);
-                    } else {
-                        openChatForum(event.data.chatId, event.data.forumName);
-                    }
-                }
-            }
-        });
-
-        // Handle subscription changes
-        OneSignal.on('subscriptionChange', function(isSubscribed) {
-            console.log('Subscription state changed:', isSubscribed);
-            const user = auth.currentUser;
-            if (user) {
-                const username = user.email.split('@')[0];
-                db.collection('employees').doc(username).update({
-                    notificationEnabled: isSubscribed,
-                    lastNotificationUpdate: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(error => {
-                    console.error('Error updating subscription state:', error);
-                });
-            }
-        });
-    });
-}
-
-// Enhanced notification sending with Android support
-async function sendEmployeeNotification(employeeId, title, message, data = {}) {
-    try {
-        // Get the employee's player ID
-        const employeeDoc = await db.collection('employees').doc(employeeId).get();
-        if (!employeeDoc.exists) {
-            console.log('Employee not found');
-            return;
-        }
-
-        const employee = employeeDoc.data();
-        if (!employee.playerId) {
-            console.log('Employee has no player ID');
-            return;
-        }
-
-        if (employee.notificationEnabled === false) {
-            console.log('Employee has notifications disabled');
-            return;
-        }
-
-        // Prepare notification data with Android parameters
-        const notificationData = {
-            app_id: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
-            include_player_ids: [employee.playerId],
-            headings: { en: title },
-            contents: { en: message },
-            data: data,
-            // Android-specific parameters
-            android_channel_id: "dnata-notifications-channel",
-            small_icon: "ic_stat_onesignal_default",
-            large_icon: "https://dnata-e2569.firebaseapp.com/logo192.png",
-            android_accent_color: "FF00A8FF",
-            priority: 10, // High priority for important notifications
-            android_visibility: 1, // Public notification
-            ios_badgeType: "Increase",
-            ios_badgeCount: 1
-        };
-
-        // Send notification via OneSignal API
-        const response = await fetch('https://onesignal.com/api/v1/notifications', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Basic os_v2_app_r2mxxiqs2fgxxbxvmcgzx4ykkyoyqqjupcoerwvga7cpdam66tnoxcptb2cco4qo7ert4gyu4lak4ggsthudg5ny7wqjykhlg3re7oy'
-            },
-            body: JSON.stringify(notificationData)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`OneSignal API error: ${response.status} - ${JSON.stringify(errorData)}`);
-        }
-
-        console.log('Push notification sent successfully to', employeeId);
-    } catch (error) {
-        console.error('Error sending push notification:', error);
-    }
-}
-
-// Enhanced bulk notification sending
-async function sendBulkNotifications(employeeIds, title, message, data = {}) {
-    try {
-        // Get all employees with their player IDs
-        const employeesSnapshot = await db.collection('employees')
-            .where(firebase.firestore.FieldPath.documentId(), 'in', employeeIds)
-            .get();
-
-        if (employeesSnapshot.empty) {
-            console.log('No employees found');
-            return;
-        }
-
-        const playerIds = [];
-        employeesSnapshot.forEach(doc => {
-            const employee = doc.data();
-            if (employee.playerId && employee.notificationEnabled !== false) {
-                playerIds.push(employee.playerId);
-            }
-        });
-
-        if (playerIds.length === 0) {
-            console.log('No valid player IDs found for these employees');
-            return;
-        }
-
-        // Prepare notification data with Android parameters
-        const notificationData = {
-            app_id: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
-            include_player_ids: playerIds,
-            headings: { en: title },
-            contents: { en: message },
-            data: data,
-            // Android-specific parameters
-            android_channel_id: "dnata-notifications-channel",
-            small_icon: "ic_stat_onesignal_default",
-            large_icon: "https://dnata-e2569.firebaseapp.com/logo192.png",
-            android_accent_color: "FF00A8FF",
-            priority: 10, // High priority for important notifications
-            android_visibility: 1, // Public notification
-            ios_badgeType: "Increase",
-            ios_badgeCount: 1
-        };
-
-        // Send notification via OneSignal API
-        const response = await fetch('https://onesignal.com/api/v1/notifications', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Basic os_v2_app_r2mxxiqs2fgxxbxvmcgzx4ykkyoyqqjupcoerwvga7cpdam66tnoxcptb2cco4qo7ert4gyu4lak4ggsthudg5ny7wqjykhlg3re7oy'
-            },
-            body: JSON.stringify(notificationData)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`OneSignal API error: ${response.status} - ${JSON.stringify(errorData)}`);
-        }
-
-        console.log('Bulk push notifications sent successfully to', playerIds.length, 'devices');
-    } catch (error) {
-        console.error('Error sending bulk push notifications:', error);
-    }
-}
-
-// Show notification badge with sound and vibration
-function showNotificationBadge(iconId, count) {
-    const icon = document.getElementById(iconId);
-    if (!icon) return;
-
-    // Remove existing badge if any
-    const existingBadge = icon.querySelector('.notification-badge');
-    if (existingBadge) {
-        existingBadge.remove();
-    }
-
-    if (count > 0) {
-        // Create badge element
-        const badge = document.createElement('div');
-        badge.className = 'notification-badge';
-        badge.textContent = count > 9 ? '9+' : count.toString();
-        icon.appendChild(badge);
-
-        // Play notification sound
-        try {
-            const audio = new Audio('notification.mp3');
-            audio.play().catch(e => console.log('Audio play failed:', e));
-        } catch (e) {
-            console.log('Audio error:', e);
-        }
-
-        // Vibrate device if supported
-        try {
-            if ('vibrate' in navigator) {
-                navigator.vibrate([100, 50, 100]);
-            }
-        } catch (e) {
-            console.log('Vibration error:', e);
-        }
-    }
-}
-
-// Update announcement badge
-function updateAnnouncementBadge() {
-    showNotificationBadge('dashboardHomeIcon', unreadAnnouncements);
-}
-
-// Update message badges
-function updateMessageBadges() {
-    const totalUnread = Object.values(unreadMessages).reduce((sum, count) => sum + count, 0);
-    showNotificationBadge('dashboardForumsIcon', totalUnread);
-}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Fixed header elements
@@ -3467,10 +3131,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Load messages for this private chat
                     loadPrivateMessages(chatId);
-                    
-                    // Reset unread count for this chat
-                    unreadMessages[chatId] = 0;
-                    updateMessageBadges();
                 }
             });
     }
@@ -3585,45 +3245,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         announcementItem.classList.add('visible');
                     }, index * 150);
                 });
-                
-                // Check for new announcements
-                checkNewAnnouncements();
             })
             .catch(error => {
                 console.error('Error loading announcements:', error);
                 announcementsBody.innerHTML = '<div class="no-announcements">Error loading announcements. Please try again later.</div>';
-            });
-    }
-
-    // Check for new announcements
-    function checkNewAnnouncements() {
-        const user = auth.currentUser;
-        if (!user) return;
-        
-        const username = user.email.split('@')[0];
-        
-        db.collection('employees').doc(username).get()
-            .then(doc => {
-                if (doc.exists) {
-                    const employee = doc.data();
-                    const lastChecked = employee.lastAnnouncementCheck || new Date(0);
-                    
-                    // Count announcements newer than last check
-                    db.collection('announcements')
-                        .where('date', '>', lastChecked)
-                        .get()
-                        .then(snapshot => {
-                            unreadAnnouncements = snapshot.size;
-                            updateAnnouncementBadge();
-                            
-                            // Update last check time
-                            if (unreadAnnouncements > 0) {
-                                db.collection('employees').doc(username).update({
-                                    lastAnnouncementCheck: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                            }
-                        });
-                }
             });
     }
 
@@ -4072,7 +3697,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Play notification sound
         try {
-            const audio = new Audio('alarm.mp3');
+            const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
             audio.play().catch(e => console.log('Audio play failed:', e));
         } catch (e) {
             console.log('Audio error:', e);
@@ -4110,20 +3735,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 activeBreakAlerts = activeBreakAlerts.filter(alert => alert !== breakAlert);
             }, 300);
         });
-        
-        // Also send push notification if user is not active
-        const user = auth.currentUser;
-        if (user) {
-            const username = user.email.split('@')[0];
-            
-            // Only send push notification if the app is in background/closed
-            if (document.visibilityState !== 'visible') {
-                sendEmployeeNotification(username, title, message, {
-                    type: 'break_alert',
-                    alert_type: type
-                });
-            }
-        }
     }
 
     // Close all break alerts of a specific type
@@ -4400,26 +4011,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     sender: username,
                     timestamp: timestamp
                 });
-
-                // Send notification to the other participant
-                const chatParts = currentForumId.split('_');
-                const otherParticipantId = chatParts[0] === username ? chatParts[1] : chatParts[0];
-                
-                // Get sender's name for the notification
-                const senderDoc = await db.collection('employees').doc(username).get();
-                const senderName = senderDoc.exists ? 
-                    `${senderDoc.data().firstName || ''} ${senderDoc.data().lastName || ''}` : username;
-                
-                sendEmployeeNotification(otherParticipantId, 
-                    'New Voice Message', 
-                    `You received a voice message from ${senderName}`,
-                    {
-                        type: 'new_message',
-                        chatId: currentForumId,
-                        isPrivate: true,
-                        senderName: senderName
-                    }
-                );
             } else {
                 // Forum chat
                 await db.collection('chatForums').doc(currentForumId).collection('messages').add({
@@ -4430,33 +4021,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     sender: username,
                     timestamp: timestamp
                 });
-
-                // Send notification to all forum members except sender
-                const forumDoc = await db.collection('chatForums').doc(currentForumId).get();
-                if (forumDoc.exists) {
-                    const forum = forumDoc.data();
-                    const members = forum.members || [];
-                    const otherMembers = members.filter(member => member !== username);
-                    
-                    if (otherMembers.length > 0) {
-                        // Get sender's name for the notification
-                        const senderDoc = await db.collection('employees').doc(username).get();
-                        const senderName = senderDoc.exists ? 
-                            `${senderDoc.data().firstName || ''} ${senderDoc.data().lastName || ''}` : username;
-                        
-                        sendBulkNotifications(otherMembers, 
-                            'New Voice Message', 
-                            `${senderName} sent a voice message in ${forum.name}`,
-                            {
-                                type: 'new_message',
-                                chatId: currentForumId,
-                                isPrivate: false,
-                                forumName: forum.name,
-                                senderName: senderName
-                            }
-                        );
-                    }
-                }
             }
             
         } catch (error) {
@@ -4486,7 +4050,7 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadFile(file);
     });
 
-    async function uploadFile(file) {
+    function uploadFile(file) {
         const user = auth.currentUser;
         if (!user || !currentForumId) return;
 
@@ -4517,14 +4081,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error uploading file:', error);
                 alert('Error uploading file. Please try again.');
             }, 
-            async () => {
-                try {
-                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                    
+            () => {
+                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
                     // Save file info to Firestore
+                    let savePromise;
+                    
                     if (currentForumId.includes('_')) {
-                        // Private chat
-                        await db.collection('privateChats').doc(currentForumId).collection('messages').add({
+                        savePromise = db.collection('privateChats').doc(currentForumId).collection('messages').add({
                             file: {
                                 url: downloadURL,
                                 type: file.type,
@@ -4533,29 +4096,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             sender: username,
                             timestamp: timestamp
                         });
-
-                        // Send notification to the other participant
-                        const chatParts = currentForumId.split('_');
-                        const otherParticipantId = chatParts[0] === username ? chatParts[1] : chatParts[0];
-                        
-                        // Get sender's name for the notification
-                        const senderDoc = await db.collection('employees').doc(username).get();
-                        const senderName = senderDoc.exists ? 
-                            `${senderDoc.data().firstName || ''} ${senderDoc.data().lastName || ''}` : username;
-                        
-                        sendEmployeeNotification(otherParticipantId, 
-                            'New File Shared', 
-                            `${senderName} shared a file with you`,
-                            {
-                                type: 'new_message',
-                                chatId: currentForumId,
-                                isPrivate: true,
-                                senderName: senderName
-                            }
-                        );
                     } else {
-                        // Forum chat
-                        await db.collection('chatForums').doc(currentForumId).collection('messages').add({
+                        savePromise = db.collection('chatForums').doc(currentForumId).collection('messages').add({
                             file: {
                                 url: downloadURL,
                                 type: file.type,
@@ -4564,41 +4106,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             sender: username,
                             timestamp: timestamp
                         });
-
-                        // Send notification to all forum members except sender
-                        const forumDoc = await db.collection('chatForums').doc(currentForumId).get();
-                        if (forumDoc.exists) {
-                            const forum = forumDoc.data();
-                            const members = forum.members || [];
-                            const otherMembers = members.filter(member => member !== username);
-                            
-                            if (otherMembers.length > 0) {
-                                // Get sender's name for the notification
-                                const senderDoc = await db.collection('employees').doc(username).get();
-                                const senderName = senderDoc.exists ? 
-                                    `${senderDoc.data().firstName || ''} ${senderDoc.data().lastName || ''}` : username;
-                                
-                                sendBulkNotifications(otherMembers, 
-                                    'New File Shared', 
-                                    `${senderName} shared a file in ${forum.name}`,
-                                    {
-                                        type: 'new_message',
-                                        chatId: currentForumId,
-                                        isPrivate: false,
-                                        forumName: forum.name,
-                                        senderName: senderName
-                                    }
-                                );
-                            }
-                        }
                     }
                     
-                    // Clear the file input
-                    fileUploadInput.value = '';
-                } catch (error) {
-                    console.error('Error saving file info:', error);
-                    alert('Error saving file information. Please try again.');
-                }
+                    savePromise.then(() => {
+                        // Clear the file input
+                        fileUploadInput.value = '';
+                    })
+                    .catch(error => {
+                        console.error('Error saving file info:', error);
+                        alert('Error saving file information. Please try again.');
+                    });
+                });
             }
         );
     }
@@ -4611,7 +4129,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    async function sendMessage() {
+    function sendMessage() {
         const messageText = chatInput.value.trim();
         if (!messageText || !currentForumId) return;
 
@@ -4621,75 +4139,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const username = user.email.split('@')[0];
         const timestamp = firebase.firestore.FieldValue.serverTimestamp();
 
-        try {
-            if (currentForumId.includes('_')) {
-                // Private chat
-                await db.collection('privateChats').doc(currentForumId).collection('messages').add({
-                    text: messageText,
-                    sender: username,
-                    timestamp: timestamp
-                });
-
-                // Send notification to the other participant
-                const chatParts = currentForumId.split('_');
-                const otherParticipantId = chatParts[0] === username ? chatParts[1] : chatParts[0];
-                
-                // Get sender's name for the notification
-                const senderDoc = await db.collection('employees').doc(username).get();
-                const senderName = senderDoc.exists ? 
-                    `${senderDoc.data().firstName || ''} ${senderDoc.data().lastName || ''}` : username;
-                
-                sendEmployeeNotification(otherParticipantId, 
-                    'New Message', 
-                    `${senderName}: ${messageText.length > 30 ? messageText.substring(0, 30) + '...' : messageText}`,
-                    {
-                        type: 'new_message',
-                        chatId: currentForumId,
-                        isPrivate: true,
-                        senderName: senderName
-                    }
-                );
-            } else {
-                // Forum chat
-                await db.collection('chatForums').doc(currentForumId).collection('messages').add({
-                    text: messageText,
-                    sender: username,
-                    timestamp: timestamp
-                });
-
-                // Send notification to all forum members except sender
-                const forumDoc = await db.collection('chatForums').doc(currentForumId).get();
-                if (forumDoc.exists) {
-                    const forum = forumDoc.data();
-                    const members = forum.members || [];
-                    const otherMembers = members.filter(member => member !== username);
-                    
-                    if (otherMembers.length > 0) {
-                        // Get sender's name for the notification
-                        const senderDoc = await db.collection('employees').doc(username).get();
-                        const senderName = senderDoc.exists ? 
-                            `${senderDoc.data().firstName || ''} ${senderDoc.data().lastName || ''}` : username;
-                        
-                        sendBulkNotifications(otherMembers, 
-                            `New Message in ${forum.name}`, 
-                            `${senderName}: ${messageText.length > 30 ? messageText.substring(0, 30) + '...' : messageText}`,
-                            {
-                                type: 'new_message',
-                                chatId: currentForumId,
-                                isPrivate: false,
-                                forumName: forum.name,
-                                senderName: senderName
-                            }
-                        );
-                    }
-                }
-            }
-            
+        let savePromise;
+        
+        if (currentForumId.includes('_')) {
+            savePromise = db.collection('privateChats').doc(currentForumId).collection('messages').add({
+                text: messageText,
+                sender: username,
+                timestamp: timestamp
+            });
+        } else {
+            savePromise = db.collection('chatForums').doc(currentForumId).collection('messages').add({
+                text: messageText,
+                sender: username,
+                timestamp: timestamp
+            });
+        }
+        
+        savePromise.then(() => {
             chatInput.value = '';
-        } catch (error) {
+        })
+        .catch(error => {
             console.error('Error sending message:', error);
             alert('Error sending message. Please try again.');
-        }
+        });
     }
 
     // Open chat forum
@@ -4702,10 +4174,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Load messages
         loadForumMessages(forumId);
-        
-        // Reset unread count for this forum
-        unreadMessages[forumId] = 0;
-        updateMessageBadges();
     }
 
     // Load forum messages
@@ -5294,9 +4762,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Load employee's teams and announcements
                         loadEmployeeTeams(email);
                         loadAnnouncements();
-                        
-                        // Set up listeners for new messages
-                        setupMessageListeners(email);
                     }
                 });
                 
@@ -5317,45 +4782,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     section.classList.add('visible');
                 }, index * 150);
             });
-            
-            // Initialize OneSignal after showing dashboard
-            initializeOneSignal();
         }, 400);
-    }
-
-    // Set up listeners for new messages
-    function setupMessageListeners(username) {
-        // Listen for new private messages
-        db.collection('privateChats')
-            .where('participants', 'array-contains', username)
-            .onSnapshot(snapshot => {
-                snapshot.docChanges().forEach(change => {
-                    if (change.type === 'modified') {
-                        const chatId = change.doc.id;
-                        if (chatId !== currentForumId) {
-                            // Increment unread count for this chat
-                            unreadMessages[chatId] = (unreadMessages[chatId] || 0) + 1;
-                            updateMessageBadges();
-                        }
-                    }
-                });
-            });
-        
-        // Listen for new forum messages in joined forums
-        db.collection('chatForums')
-            .where('members', 'array-contains', username)
-            .onSnapshot(snapshot => {
-                snapshot.docChanges().forEach(change => {
-                    if (change.type === 'modified') {
-                        const forumId = change.doc.id;
-                        if (forumId !== currentForumId) {
-                            // Increment unread count for this forum
-                            unreadMessages[forumId] = (unreadMessages[forumId] || 0) + 1;
-                            updateMessageBadges();
-                        }
-                    }
-                });
-            });
     }
 
     // Logout functionality
@@ -5375,13 +4802,6 @@ document.addEventListener('DOMContentLoaded', function() {
             alert.remove();
         });
         activeBreakAlerts = [];
-        
-        // Clear OneSignal state on logout
-        if (window.OneSignal) {
-            OneSignal.push(function() {
-                OneSignal.setSubscription(false);
-            });
-        }
         
         // Animate dashboard out
         dashboardContainer.classList.remove('active');
@@ -5512,6 +4932,41 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
 
+    // Tooltip functionality for floating icons
+    const floatingIcons = document.querySelectorAll('.floating-icon');
+    floatingIcons.forEach(icon => {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'tooltip';
+        tooltip.textContent = icon.getAttribute('data-tooltip');
+        icon.appendChild(tooltip);
+        
+        icon.addEventListener('mouseenter', function() {
+            tooltip.style.visibility = 'visible';
+            tooltip.style.opacity = '1';
+        });
+        
+        icon.addEventListener('mouseleave', function() {
+            tooltip.style.visibility = 'hidden';
+            tooltip.style.opacity = '0';
+        });
+    });
+
+    // Tooltip functionality for dashboard icons
+    const dashboardIcons = document.querySelectorAll('.dashboard-icon');
+    dashboardIcons.forEach(icon => {
+        const tooltip = icon.querySelector('.dashboard-icon-tooltip');
+        
+        icon.addEventListener('mouseenter', function() {
+            tooltip.style.visibility = 'visible';
+            tooltip.style.opacity = '1';
+        });
+        
+        icon.addEventListener('mouseleave', function() {
+            tooltip.style.visibility = 'hidden';
+            tooltip.style.opacity = '0';
+        });
+    });
+
     // Check if user is already logged in
     auth.onAuthStateChanged((user) => {
         if (user) {
@@ -5548,19 +5003,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initially hide the fixed header
     fixedHeader.style.display = 'none';
     globalBackButton.style.display = 'none';
-    
-    // Initialize OneSignal when page loads (will be properly initialized after login)
-    initializeOneSignal();
-    
-    // Handle page visibility changes to prevent duplicate notifications
-    document.addEventListener('visibilitychange', function() {
-        if (document.visibilityState === 'visible') {
-            // Page is active, no need for push notifications
-            console.log('App is now visible');
-        }
-    });
 });
-
 // Attachment button functionality
 const attachmentBtn = document.getElementById('attachmentBtn');
 const expandedActions = document.getElementById('expandedActions');
@@ -5686,7 +5129,8 @@ document.getElementById('cameraPreviewAccept').addEventListener('click', functio
     
     // For demo, we'll just show the image in chat
     addMessage('You', 'Photo', true, 'image');
-});</script>
+});
+</script>
    
 </body>
 </html>

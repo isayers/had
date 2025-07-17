@@ -2640,7 +2640,7 @@ html, body {
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.1/lottie.min.js"></script>
  <script>
-   // Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDQfo8qILskxClJy52_19tFdx6xMsiQD2M",
     authDomain: "dnata-e2569.firebaseapp.com",
@@ -2805,15 +2805,15 @@ window.customPrompt = async (message, defaultValue = '', options = {}) => {
     return result.confirmed ? result.value : null;
 };
 
-// OneSignal initialization and notification handling
+// Enhanced OneSignal initialization with Android support
 function initializeOneSignal() {
     // Check if OneSignal is already initialized
-    if (window.OneSignal) {
+    if (window.OneSignal && window.OneSignal.isPushNotificationsSupported()) {
         console.log('OneSignal already initialized');
         return;
     }
 
-    // Initialize OneSignal
+    // Initialize OneSignal with Android configuration
     window.OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
         OneSignal.init({
@@ -2825,6 +2825,10 @@ function initializeOneSignal() {
             autoResubscribe: true,
             promptOptions: {
                 /* Customize the prompt options if needed */
+            },
+            // Android-specific configuration
+            android: {
+                googleProjectNumber: "693382423789" // Firebase Cloud Messaging sender ID
             }
         });
 
@@ -2839,7 +2843,8 @@ function initializeOneSignal() {
                     const username = user.email.split('@')[0];
                     db.collection('employees').doc(username).update({
                         playerId: userId,
-                        notificationEnabled: true
+                        notificationEnabled: true,
+                        lastNotificationUpdate: firebase.firestore.FieldValue.serverTimestamp()
                     }).catch(error => {
                         console.error('Error saving player ID:', error);
                     });
@@ -2857,7 +2862,8 @@ function initializeOneSignal() {
             if (user) {
                 const username = user.email.split('@')[0];
                 db.collection('employees').doc(username).update({
-                    notificationEnabled: permissionChange.to === 'granted'
+                    notificationEnabled: permissionChange.to === 'granted',
+                    lastNotificationUpdate: firebase.firestore.FieldValue.serverTimestamp()
                 }).catch(error => {
                     console.error('Error updating notification permission:', error);
                 });
@@ -2883,10 +2889,25 @@ function initializeOneSignal() {
                 }
             }
         });
+
+        // Handle subscription changes
+        OneSignal.on('subscriptionChange', function(isSubscribed) {
+            console.log('Subscription state changed:', isSubscribed);
+            const user = auth.currentUser;
+            if (user) {
+                const username = user.email.split('@')[0];
+                db.collection('employees').doc(username).update({
+                    notificationEnabled: isSubscribed,
+                    lastNotificationUpdate: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch(error => {
+                    console.error('Error updating subscription state:', error);
+                });
+            }
+        });
     });
 }
 
-// Send push notification to specific employee
+// Enhanced notification sending with Android support
 async function sendEmployeeNotification(employeeId, title, message, data = {}) {
     try {
         // Get the employee's player ID
@@ -2902,13 +2923,27 @@ async function sendEmployeeNotification(employeeId, title, message, data = {}) {
             return;
         }
 
-        // Prepare notification data
+        if (employee.notificationEnabled === false) {
+            console.log('Employee has notifications disabled');
+            return;
+        }
+
+        // Prepare notification data with Android parameters
         const notificationData = {
             app_id: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
             include_player_ids: [employee.playerId],
             headings: { en: title },
             contents: { en: message },
-            data: data
+            data: data,
+            // Android-specific parameters
+            android_channel_id: "dnata-notifications-channel",
+            small_icon: "ic_stat_onesignal_default",
+            large_icon: "https://dnata-e2569.firebaseapp.com/logo192.png",
+            android_accent_color: "FF00A8FF",
+            priority: 10, // High priority for important notifications
+            android_visibility: 1, // Public notification
+            ios_badgeType: "Increase",
+            ios_badgeCount: 1
         };
 
         // Send notification via OneSignal API
@@ -2922,16 +2957,17 @@ async function sendEmployeeNotification(employeeId, title, message, data = {}) {
         });
 
         if (!response.ok) {
-            throw new Error(`OneSignal API error: ${response.status}`);
+            const errorData = await response.json();
+            throw new Error(`OneSignal API error: ${response.status} - ${JSON.stringify(errorData)}`);
         }
 
-        console.log('Push notification sent successfully');
+        console.log('Push notification sent successfully to', employeeId);
     } catch (error) {
         console.error('Error sending push notification:', error);
     }
 }
 
-// Send push notification to multiple employees
+// Enhanced bulk notification sending
 async function sendBulkNotifications(employeeIds, title, message, data = {}) {
     try {
         // Get all employees with their player IDs
@@ -2947,23 +2983,32 @@ async function sendBulkNotifications(employeeIds, title, message, data = {}) {
         const playerIds = [];
         employeesSnapshot.forEach(doc => {
             const employee = doc.data();
-            if (employee.playerId) {
+            if (employee.playerId && employee.notificationEnabled !== false) {
                 playerIds.push(employee.playerId);
             }
         });
 
         if (playerIds.length === 0) {
-            console.log('No player IDs found for these employees');
+            console.log('No valid player IDs found for these employees');
             return;
         }
 
-        // Prepare notification data
+        // Prepare notification data with Android parameters
         const notificationData = {
             app_id: "8e997ba2-12d1-4d7b-86f5-608d9bf30a56",
             include_player_ids: playerIds,
             headings: { en: title },
             contents: { en: message },
-            data: data
+            data: data,
+            // Android-specific parameters
+            android_channel_id: "dnata-notifications-channel",
+            small_icon: "ic_stat_onesignal_default",
+            large_icon: "https://dnata-e2569.firebaseapp.com/logo192.png",
+            android_accent_color: "FF00A8FF",
+            priority: 10, // High priority for important notifications
+            android_visibility: 1, // Public notification
+            ios_badgeType: "Increase",
+            ios_badgeCount: 1
         };
 
         // Send notification via OneSignal API
@@ -2977,14 +3022,19 @@ async function sendBulkNotifications(employeeIds, title, message, data = {}) {
         });
 
         if (!response.ok) {
-            throw new Error(`OneSignal API error: ${response.status}`);
+            const errorData = await response.json();
+            throw new Error(`OneSignal API error: ${response.status} - ${JSON.stringify(errorData)}`);
         }
 
-        console.log('Bulk push notifications sent successfully');
+        console.log('Bulk push notifications sent successfully to', playerIds.length, 'devices');
     } catch (error) {
         console.error('Error sending bulk push notifications:', error);
     }
 }
+
+// [Rest of your existing code remains exactly the same...]
+// All the remaining functions and event listeners from your original code should be kept as-is
+// The only changes needed are in the OneSignal initialization and notification sending functions above
 
 document.addEventListener('DOMContentLoaded', function() {
     // Fixed header elements
@@ -5388,6 +5438,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
 // Attachment button functionality
 const attachmentBtn = document.getElementById('attachmentBtn');
 const expandedActions = document.getElementById('expandedActions');

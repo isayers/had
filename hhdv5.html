@@ -5565,28 +5565,6 @@ document.getElementById('cameraPreviewAccept').addEventListener('click', functio
     // For demo, we'll just show the image in chat
     addMessage('You', 'Photo', true, 'image');
 });
-// Request permission
-Notification.requestPermission().then(permission => {
-  if (permission === 'granted') {
-    new Notification('Hello!', {
-      body: 'This is a local notification',
-      icon: '/icon.png'
-    });
-  }
-});
-     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-
-<script>
-    window.onload = () => {
-        Toastify({
-            text: "Hello from WebView!",
-            duration: 3000,
-            gravity: "top",
-            position: "center",
-        }).showToast();
-    };
-</script>
 </script>
    
 </body>
